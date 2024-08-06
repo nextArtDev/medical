@@ -23,7 +23,11 @@ const weekDays = [
   },
   { id: '2', label: 'یکشنبه', component: <SplitterTime /> },
   { id: '3', label: 'دوشنبه', component: <SplitterTime /> },
-  { id: '4', label: 'سه‌شنبه', component: <SplitterTime /> },
+  {
+    id: '4',
+    label: 'سه‌شنبه',
+    component: <SplitterTime range={15} start="15:30" end="20:00" />,
+  },
   { id: '5', label: 'چهارشنبه', component: <SplitterTime /> },
   { id: '6', label: 'پنجشنبه', component: <SplitterTime /> },
   { id: '7', label: 'جمعه', component: <SplitterTime /> },
@@ -56,9 +60,9 @@ const Availability: FC<AvailabilityProps> = ({}) => {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-2">
-                <div className="grid grid-cols-2 ">
+                <div className=" ">
                   {weekDay.component}
-                  <div className=" border-r p-2">Selected</div>
+                  {/* <div className=" border-r p-2">Selected</div> */}
                 </div>
               </CardContent>
             </Card>
