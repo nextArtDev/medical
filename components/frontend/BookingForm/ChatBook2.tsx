@@ -22,27 +22,19 @@ import {
 import { Input } from '@/components/ui/input'
 
 const FormSchema = z.object({
-  // dob: z.date({
-  //   required_error: 'A date of birth is required.',
-  // }),
-  // duration: z.string(),
-  // type: z.enum(
-  //   ['شنبه', 'یکشنبه', 'دوشنبه', 'سه‌شنبه', 'چهارشنبه', 'پنجشنبه', 'جمعه'],
-  //   {
-  //     required_error: 'You need to select a notification type.',
-  //   }
-  // ),
-  type: z.any(),
-  // items: z.array(z.string()).refine((value) => value.some((item) => item), {
-  //   message: 'You have to select at least one item.',
-  // }),
-  // items: z.array(z.string()).refine((value) => value.some((item) => item), {
-  //   message: 'You have to select at least one item.',
-  // }),
-  fromTime: z.any(),
-  toTime: z.any(),
-  // fromTime: z.string().time(),
-  // toTime: z.string().time()
+  days: z.array(
+    z.object({
+      id: z.string(),
+      fromTime: z.object({
+        hour: z.any(),
+        minute: z.any(),
+      }),
+      toTime: z.object({
+        hour: z.any(),
+        minute: z.any(),
+      }),
+    })
+  ),
 })
 
 const weekDays = [
@@ -55,46 +47,49 @@ const weekDays = [
   { id: '7', label: 'جمعه' },
 ]
 type Props = {}
-function Books({}: Props) {
+function ChatBook2({}: Props) {
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
+    // defaultValues: {
+    //   days: weekDays.map((day) => ({
+    //     id: day.id,
+    //     fromTime: { hour: 0, minute: 0 },
+    //     toTime: { hour: 0, minute: 0 },
+    //   })),
+    // },
   })
 
   function onSubmit(data: z.infer<typeof FormSchema>) {
-    console.log(data.fromTime.hour)
+    console.log(data)
   }
 
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-        <section className="border py-6 px-4 border-gray-200 flex items-center justify-between">
+        <section className="border py-6 px-4 border-gray-200 ">
           <ul className="flex flex-col gap-4 ">
-            {weekDays.map((item) => (
+            {form.watch('days')?.map((day, index) => (
               <article
-                key={item.id}
+                key={day.id}
                 className="grid grid-cols-4 h-16 place-items-center place-content-center "
               >
                 <div className="col-span-1 ml-auto flex justify-center items-center gap-1 ">
                   <FormField
                     control={form.control}
-                    name="type"
+                    name={`days.${index}.id`}
                     render={({ field }) => (
                       <FormItem className="flex gap-1 items-center justify-center ">
                         <FormControl>
                           <Checkbox
-                            checked={field.value?.includes(item.id)}
-                            onCheckedChange={(checked) => {
-                              return checked
-                                ? field.onChange([...field.value, item.id])
-                                : field.onChange(
-                                    field.value?.filter(
-                                      (value) => value !== item.id
-                                    )
-                                  )
-                            }}
+                            checked={!!field.value}
+                            onCheckedChange={(checked) =>
+                              field.onChange(checked)
+                            }
                           />
                         </FormControl>
-                        <FormLabel>{item.label}</FormLabel>
+                        <FormLabel>
+                          {weekDays.find((w) => w.id === field.value)?.label}
+                        </FormLabel>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -107,7 +102,7 @@ function Books({}: Props) {
                   >
                     <FormField
                       control={form.control}
-                      name="fromTime"
+                      name={`days.${index}.fromTime`}
                       render={({ field }) => (
                         <FormItem className="flex gap-1 items-center justify-center ">
                           <FormControl>
@@ -116,7 +111,7 @@ function Books({}: Props) {
                               suffix={<TimerIcon />}
                               hourCycle={24}
                               size="sm"
-                              value={field.value!}
+                              value={field.value}
                               onChange={field.onChange}
                             />
                           </FormControl>
@@ -132,7 +127,7 @@ function Books({}: Props) {
                   >
                     <FormField
                       control={form.control}
-                      name="toTime"
+                      name={`days.${index}.toTime`}
                       render={({ field }) => (
                         <FormItem className="flex gap-1 items-center justify-center ">
                           <FormControl>
@@ -167,4 +162,4 @@ function Books({}: Props) {
   )
 }
 
-export default Books
+export default ChatBook2
