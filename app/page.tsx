@@ -10,8 +10,9 @@ export default function Home() {
   return (
     <section className="min-h-screen w-screen flex  flex-col items-center justify-center h-full ">
       {/* Main one */}
-      <ChatBook4 />
-      {/* <BookingForm /> */}
+      {/* <ChatBook4 /> */}
+
+      <BookingForm />
       {/* <Books />
       <section className="my-20">
         <ChatBook3 />
@@ -21,7 +22,7 @@ export default function Home() {
         <h1>Booking2</h1>
         <ChatBook2 />
       </section> */}
-      <Availability />
+      {/* <Availability /> */}
     </section>
   )
 }

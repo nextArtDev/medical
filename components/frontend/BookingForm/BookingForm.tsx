@@ -37,18 +37,29 @@ import {
 } from '@/components/ui/select'
 import { Plus } from 'lucide-react'
 import Books from './Books'
+import { useState } from 'react'
+import { Modal, Separator } from 'react-aria-components'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog'
+import { ScrollArea } from '@/components/ui/scroll-area'
 
 const FormSchema = z.object({
   dob: z.date({
     required_error: 'A date of birth is required.',
   }),
-  duration: z.string(),
-  type: z.enum(['all', 'mentions', 'none'], {
-    required_error: 'You need to select a notification type.',
-  }),
-  items: z.array(z.string()).refine((value) => value.some((item) => item), {
-    message: 'You have to select at least one item.',
-  }),
+  // duration: z.string(),
+  // type: z.enum(['all', 'mentions', 'none'], {
+  //   required_error: 'You need to select a notification type.',
+  // }),
+  // items: z.array(z.string()).refine((value) => value.some((item) => item), {
+  //   message: 'You have to select at least one item.',
+  // }),
   // items: z.array(z.string()).refine((value) => value.some((item) => item), {
   //   message: 'You have to select at least one item.',
   // }),
@@ -86,7 +97,28 @@ const items = [
   },
 ] as const
 
+const tags = Array.from({ length: 50 }).map((_, i, a) => `03:${a.length - i}`)
+// Replace with your actual data fetch
+
+const convertDaysToArray = (days: string[]) => {
+  const dayIndexes = days.map((day) => {
+    const daysOfWeek = [
+      'Sunday',
+      'Monday',
+      'Tuesday',
+      'Wednesday',
+      'Thursday',
+      'Friday',
+      'Saturday',
+    ]
+    return daysOfWeek.indexOf(day) // Get the index of the day
+  })
+  return dayIndexes
+}
+// const disabledDayIndexes = convertDaysToArray(days); // Convert to day indexes
+
 export default function BookingForm() {
+  const [modal, setModal] = useState(false)
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
   })
@@ -100,15 +132,15 @@ export default function BookingForm() {
     //     </pre>
     //   ),
     // })
-    console.log(data)
+    console.log(data.dob.getDay())
     console.log(jalaali.toJalaali(data.dob))
   }
 
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-        <Books />
-        <FormField
+        {/* <Books /> */}
+        {/* <FormField
           control={form.control}
           name="duration"
           render={({ field }) => (
@@ -123,8 +155,8 @@ export default function BookingForm() {
               <FormMessage />
             </FormItem>
           )}
-        />
-        <FormField
+        /> */}
+        {/* <FormField
           control={form.control}
           name="type"
           render={({ field }) => (
@@ -154,186 +186,86 @@ export default function BookingForm() {
               <FormMessage />
             </FormItem>
           )}
-        />
-        <div>
-          <h2>نوبتهای هفتگی را مشخص کنید.</h2>
-          <div className="border py-6 px-4 border-gray-200 flex items-center justify-between">
-            <div>
-              <Checkbox
-              // checked={field.value?.includes(item.id)}
-              // onCheckedChange={(checked) => {
-              //   return checked
-              //     ? field.onChange([...field.value, item.id])
-              //     : field.onChange(
-              //         field.value?.filter((value) => value !== item.id)
-              //       )
-              // }}
-              />
-              {/* <FormField
-                control={form.control}
-                name="items"
-                render={() => (
-                  <FormItem>
-                    <div className="mb-4">
-                      <FormLabel className="text-base">Sidebar</FormLabel>
-                      <FormDescription>
-                        Select the items you want to display in the sidebar.
-                      </FormDescription>
-                    </div>
-                    {items.map((item) => (
-                      <FormField
-                        key={item.id}
-                        control={form.control}
-                        name="items"
-                        render={({ field }) => {
-                          return (
-                            <FormItem
-                              key={item.id}
-                              className="flex flex-row items-start space-x-3 space-y-0"
-                            >
-                              <FormControl>
-                                <Checkbox
-                                  checked={field.value?.includes(item.id)}
-                                  onCheckedChange={(checked) => {
-                                    return checked
-                                      ? field.onChange([
-                                          ...field.value,
-                                          item.id,
-                                        ])
-                                      : field.onChange(
-                                          field.value?.filter(
-                                            (value) => value !== item.id
-                                          )
-                                        )
-                                  }}
-                                />
-                              </FormControl>
-                              <FormLabel className="text-sm font-normal">
-                                {item.label}
-                              </FormLabel>
-                            </FormItem>
-                          )
-                        }}
-                      />
-                    ))}
-                    <FormMessage />
-                  </FormItem>
-                )}
-              /> */}
-              {/* <div>
-                <Button size={'sm'} className="flex gap-1">
-                  <Plus /> اضافه کردن
-                </Button>
-              </div> */}
-              <FormField
-                control={form.control}
-                name="items"
-                render={() => (
-                  <FormItem>
-                    <div className="mb-4">
-                      <FormLabel className="text-base">Sidebar</FormLabel>
-                      <FormDescription>
-                        Select the items you want to display in the sidebar.
-                      </FormDescription>
-                    </div>
-                    {items.map((item) => (
-                      <FormField
-                        key={item.id}
-                        control={form.control}
-                        name="items"
-                        render={({ field }) => {
-                          return (
-                            <FormItem
-                              key={item.id}
-                              className="flex flex-row items-start space-x-3 space-y-0"
-                            >
-                              <Select
-                                onValueChange={field.onChange}
-                                defaultValue={field.value}
-                              >
-                                <FormControl>
-                                  <SelectTrigger id="sd">
-                                    <SelectValue placeholder="sd" />
-                                  </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                  {items.map((item) => (
-                                    <SelectItem
-                                      key={item.id}
-                                      value={item.label}
-                                    >
-                                      {item.label}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                              <FormLabel className="text-sm font-normal">
-                                {item.label}
-                              </FormLabel>
-                            </FormItem>
-                          )
-                        }}
-                      />
-                    ))}
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-          </div>
+        /> */}
+
+        <div className="border py-6 px-4 border-gray-200 flex items-center justify-between">
+          <FormField
+            control={form.control}
+            name="dob"
+            render={({ field }) => (
+              <FormItem className="flex flex-col">
+                <FormLabel>Date of birth</FormLabel>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <FormControl>
+                      <Button
+                        variant={'outline'}
+                        className={cn(
+                          'w-[240px] pl-3 text-left font-normal',
+                          !field.value && 'text-muted-foreground'
+                        )}
+                      >
+                        {field.value ? (
+                          // format(field.value, '')
+                          new Intl.DateTimeFormat('fa-IR').format(field.value)
+                        ) : (
+                          <span>Pick a date</span>
+                        )}
+                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                      </Button>
+                    </FormControl>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={field.value}
+                      onSelect={field.onChange}
+                      onDayClick={() => setModal(true)}
+                      disabled={(date) =>
+                        date <= new Date() ||
+                        date < new Date('1900-01-01') ||
+                        (date.getDay() !== 1 && date.getDay() !== 2)
+                      }
+                      locale={faIR}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+                <FormDescription>
+                  Your date of birth is used to calculate your age.
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <Button type="submit">Submit</Button>
         </div>
-        {/* <TimeField
-                            size="sm"
-                            value={field.value!}
-                            onChange={field.onChange}
-                          /> */}
-        <FormField
-          control={form.control}
-          name="dob"
-          render={({ field }) => (
-            <FormItem className="flex flex-col">
-              <FormLabel>Date of birth</FormLabel>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <FormControl>
-                    <Button
-                      variant={'outline'}
-                      className={cn(
-                        'w-[240px] pl-3 text-left font-normal',
-                        !field.value && 'text-muted-foreground'
-                      )}
-                    >
-                      {field.value ? (
-                        // format(field.value, '')
-                        new Intl.DateTimeFormat('fa-IR').format(field.value)
-                      ) : (
-                        <span>Pick a date</span>
-                      )}
-                      <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                    </Button>
-                  </FormControl>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={field.value}
-                    onSelect={field.onChange}
-                    disabled={(date) =>
-                      date <= new Date() || date < new Date('1900-01-01')
-                    }
-                    locale={faIR}
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
-              <FormDescription>
-                Your date of birth is used to calculate your age.
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <Button type="submit">Submit</Button>
+        <Dialog open={modal} onOpenChange={() => setModal(false)}>
+          <DialogContent>
+            {/* <DialogHeader>
+              <DialogTitle>Are you absolutely sure?</DialogTitle>
+              <DialogDescription>
+                This action cannot be undone. This will permanently delete your
+                account and remove your data from our servers.
+              </DialogDescription>
+            </DialogHeader> */}
+            <ScrollArea
+              scrollHideDelay={5000}
+              className="h-[370px] w-full flex flex-wrap gap-3 m-3 mx-auto rounded-md border"
+            >
+              {tags.map((tag) => (
+                <Button
+                  variant={'outline'}
+                  onClick={() => {}}
+                  key={tag}
+                  className="text-sm w-16 m-1 flex-1"
+                >
+                  {tag}
+                </Button>
+              ))}
+            </ScrollArea>
+          </DialogContent>
+        </Dialog>
       </form>
     </Form>
   )
