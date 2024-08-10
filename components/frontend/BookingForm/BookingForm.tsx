@@ -2,7 +2,7 @@
 
 import { zodResolver } from '@hookform/resolvers/zod'
 import { CalendarIcon } from '@radix-ui/react-icons'
-import { format } from 'date-fns-jalali'
+// import { format } from 'date-fns-jalali'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { faIR } from 'date-fns/locale'
@@ -37,7 +37,7 @@ import {
 } from '@/components/ui/select'
 import { Plus } from 'lucide-react'
 import Books from './Books'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Modal, Separator } from 'react-aria-components'
 import {
   Dialog,
@@ -48,6 +48,9 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog'
 import { ScrollArea } from '@/components/ui/scroll-area'
+// import pholiday from 'pholiday'
+import { compareAsc, format, newDate } from 'date-fns-jalali'
+import { holidayDays } from '@/holidays'
 
 const FormSchema = z.object({
   dob: z.date({
@@ -119,6 +122,36 @@ const convertDaysToArray = (days: string[]) => {
 
 export default function BookingForm() {
   const [modal, setModal] = useState(false)
+
+  // const disabledDays = holidayDays.map((dateStr) => {
+  //   const [year, month, day] = dateStr.split('/').map(Number)
+
+  //   // const gregorianDate = parseJalali(new Date(year, month - 1, day)) // Convert to Gregorian
+
+  //   return new Date(gregorianDate)
+  // })
+
+  // const fetchHolidaysInRange = async (startDate: Date, endDate: Date) => {
+  //   const holidayDates = []
+  //   const currentDate = new Date(startDate)
+
+  //   while (currentDate <= endDate) {
+  //     const isHoliday = await fetchHolidayStatus(currentDate)
+  //     if (isHoliday) {
+  //       holidayDates.push(new Date(currentDate))
+  //     }
+  //     currentDate.setDate(currentDate.getDate() + 1) // Move to the next day
+  //   }
+
+  //   setHolidays(holidayDates)
+  // }
+
+  // useEffect(() => {
+  //   const startDate = new Date(2023, 0, 1) // Start from January 1, 2023
+  //   const endDate = new Date(2023, 11, 31) // End on December 31, 2023
+  //   fetchHolidaysInRange(startDate, endDate)
+  // }, [])
+
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
   })
@@ -220,11 +253,20 @@ export default function BookingForm() {
                       mode="single"
                       selected={field.value}
                       onSelect={field.onChange}
-                      onDayClick={() => setModal(true)}
-                      disabled={(date) =>
-                        date <= new Date() ||
-                        date < new Date('1900-01-01') ||
-                        (date.getDay() !== 1 && date.getDay() !== 2)
+                      // onDayClick={(date) =>
+                      // holidays.find(format(date, 'yyyy/MM/dd'))
+                      // console.log(typeof date.toISOString())
+                      // console.log(format(date, 'yyyy/MM/dd'))
+                      // console.log(holidays.map((d) => d))
+                      // }
+                      disabled={
+                        (date) =>
+                          date <= new Date() ||
+                          date < new Date('1900-01-01') ||
+                          holidayDays.some(
+                            (d) => d === format(date, 'yyyy/MM/dd')
+                          )
+                        // !!fetchHolidayStatus(date)
                       }
                       locale={faIR}
                       initialFocus
