@@ -7,7 +7,7 @@ export function ThemeSwitcher() {
   const { theme, setTheme } = useTheme()
 
   return (
-    <div className="flex gap-2">
+    <div className="flex gap-2 ">
       <Button
         variant={theme === 'light' ? 'default' : 'outline'}
         onClick={() => setTheme('light')}
