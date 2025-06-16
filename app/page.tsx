@@ -23,6 +23,7 @@ export default function Home() {
         officiis impedit hic aliquam, facilis commodi recusandae ullam.
         Quibusdam repellat molestiae assumenda!
       </p>
+      <div className="neu-card w-1/2 h-1/2 mx-auto"></div>
       {/* <Button className="mask-radial-from-transparent mask-radial-from-15% mask-radial-to-black mask-radial-to-55% mask-radial-at-right">
         Register
       </Button>
