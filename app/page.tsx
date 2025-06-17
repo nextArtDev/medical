@@ -7,7 +7,7 @@ export default function Home() {
       <div className="absolute top-10">
         <ThemeSwitcher />
       </div>
-      <p
+      {/* <p
         style={
           {
             '--positive-shadow': '1px',
@@ -22,8 +22,10 @@ export default function Home() {
         inventore placeat perferendis similique? Quas esse quaerat aperiam minus
         officiis impedit hic aliquam, facilis commodi recusandae ullam.
         Quibusdam repellat molestiae assumenda!
-      </p>
-      <div className="neu-card w-1/2 h-1/2 mx-auto"></div>
+      </p> */}
+      <div className="neu-card-2 w-64 h-64 mx-auto flex flex-col">
+        <div className="neu-card-3 w-32 h-32 !rounded-full mx-auto"></div>
+      </div>
       {/* <Button className="mask-radial-from-transparent mask-radial-from-15% mask-radial-to-black mask-radial-to-55% mask-radial-at-right">
         Register
       </Button>
