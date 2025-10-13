@@ -14,22 +14,29 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum Role {
+  user
+  admin
+  doctor
+}
+
 model User {
-  id            String   @id
-  name          String   @db.Text
+  id            String  @id
+  name          String  @db.Text
   email         String
-  emailVerified Boolean  @default(false)
-  image         String?  @db.Text
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @default(now()) @updatedAt
+  emailVerified Boolean @default(false)
+  image         String? @db.Text
+
+  role Role @default(user)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
 
   phoneNumber         String?  @db.Text
   phoneNumberVerified Boolean?
 
-  sessions Session[]
-  accounts Account[]
-
-  role       String?   @db.Text
+  sessions   Session[]
+  accounts   Account[]
   banned     Boolean?  @default(false)
   banReason  String?   @db.Text
   banExpires DateTime?
@@ -91,4 +98,26 @@ model OtpRateLimit {
   lastSentAt  DateTime
 
   @@index([phoneNumber])
+}
+
+enum LeaveType {
+  FULL_DAY
+  MORNING
+  AFTERNOON
+}
+
+// Enum for patient types in an appointment
+enum PatientType {
+  MYSELF
+  SOMEONE_ELSE
+}
+
+// Enum for appointment status
+enum AppointmentStatus {
+  PAYMENT_PENDING
+  BOOKING_CONFIRMED
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+  CASH
 }

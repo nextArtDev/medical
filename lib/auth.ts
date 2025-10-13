@@ -108,7 +108,7 @@ export const currentUser = cache(async () => {
       name: true,
       email: true,
       phoneNumber: true,
-      // role: true,
+      role: true,
     },
   })
 
