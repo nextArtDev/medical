@@ -86,21 +86,21 @@ export default function DoctorCarousel({ items }: DoctorCarousel) {
                       fill
                       alt={item.name!}
                       className={cn(
-                        ' mix-blend-darken rounded-xl overflow-hidden'
+                        'object-cover mix-blend-multiply rounded-xl overflow-hidden'
                       )}
                     />
                   </figure>
                 )}
-                <article className="absolute bottom-0 w-full h-1/3 bg-primary/20 backdrop-blur-xl rounded-top-xl rounded-b-4xl flex  py-3 px-3 text-pretty text-xs md:text-sm lg:text-base">
+                <article className="absolute bottom-0 w-full h-1/3 bg-primary/20 backdrop-blur-xl rounded-t-xl rounded-b-4xl flex  py-3 px-3 text-pretty text-xs md:text-sm lg:text-base">
                   <div className="pt-2 flex flex-col gap-0.5">
                     <p className="font-bold">{item.name}</p>
                     <p className="font-semibold opacity-60">
                       {item.specialization!.name}
                     </p>
                   </div>
-                  <div className="absolute bottom-1 left-1 flex items-center justify-center size-12 rounded-full bg-gradient-to-bl from-blue-400 via-white to-blue-400">
+                  <div className="absolute bottom-1 left-1 flex items-center justify-center size-12 rounded-full bg-gradient-to-bl from-white via-blue-900/70 to-white">
                     <span className="rotate-45 p-0.5">
-                      <ArrowLeft />
+                      <ArrowLeft className="text-white" />
                     </span>
                   </div>
                 </article>
@@ -109,7 +109,7 @@ export default function DoctorCarousel({ items }: DoctorCarousel) {
           </CarouselItem>
         ))}
       </CarouselContent>
-      <CarouselPrevious className="hidden lg:flex items-center justify-center cursor-pointer size-12 bg-background/30 backdrop-blur-sm border-none top-1/2 -translate-y-1/2 left-2" />
+      <CarouselPrevious className=" flex items-center justify-center cursor-pointer size-12 bg-background/30 backdrop-blur-sm border-none top-1/2 -translate-y-1/2 left-2" />
       <CarouselNext className="hidden lg:flex items-center justify-center cursor-pointer size-12 bg-background/30 backdrop-blur-sm border-none top-1/2 -translate-y-1/2 right-4" />
     </Carousel>
   )

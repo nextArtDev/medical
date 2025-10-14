@@ -10,6 +10,11 @@
   body {
     @apply bg-background text-foreground;
   }
+  /*  smooth behavior */
+  html {
+    scroll-padding-top: 56px;
+    scroll-behavior: smooth;
+  }
 }
 
 @theme inline {
@@ -203,15 +208,6 @@
   background: linear-gradient(145deg, #ffffff, #c9c9c9);
   border-radius: 100%;
   box-shadow: 0.3px 0.3px 1px #6d6868, -0.3px -0.3px 1px #9e9999;
-}
-
-@layer base {
-  * {
-    @apply border-border outline-ring/50;
-  }
-  body {
-    @apply bg-background text-foreground;
-  }
 }
 
 @keyframes fade-in {
