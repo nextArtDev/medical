@@ -1,5 +1,6 @@
 import { NavbarDemo } from '@/components/home/navbar'
 import type { Metadata } from 'next'
+import { ViewTransitions } from 'next-view-transitions'
 
 export const metadata: Metadata = {
   title: 'Create Next App',
@@ -12,9 +13,11 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <div>
-      <NavbarDemo />
-      {children}
-    </div>
+    <section className="relative w-full h-full ">
+      <ViewTransitions>
+        <NavbarDemo />
+        {children}
+      </ViewTransitions>
+    </section>
   )
 }

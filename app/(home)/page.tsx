@@ -1,3 +1,4 @@
+import DoctorCarousel from '@/components/home/doctor-card/doctor-carousel'
 import ToothGlassPage from '@/components/home/hero/AppleTypeHero'
 import { ThemeSwitcher } from '@/components/shared/theme-switcher'
 import { Button } from '@/components/ui/button'
@@ -6,6 +7,22 @@ export default function Home() {
   return (
     <section className="relative min-h-screen w-screen flex  flex-col gap-10 items-center justify-center h-full ">
       <ToothGlassPage />
+      <DoctorCarousel
+        items={[
+          {
+            images: [{ url: '/images/9.jpg' }],
+            slug: 'dr-john-doe',
+            name: 'Dr. John Doe',
+            specialization: { name: 'Cardiology' },
+          },
+          {
+            images: [{ url: '/images/9.jpg' }],
+            slug: 'dr-jane-smith',
+            name: 'Dr. Jane Smith',
+            specialization: { name: 'Neurology' },
+          },
+        ]}
+      />
       <div className="absolute top-10">
         <ThemeSwitcher />
       </div>
