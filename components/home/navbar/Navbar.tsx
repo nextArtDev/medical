@@ -218,7 +218,7 @@ MobileNavMenuProps) => {
 
 export const MobileNavToggle = ({
   isOpen,
-  //@ts-ignore
+  //   @ts-ignore
   onClick,
 }: {
   isOpen: boolean

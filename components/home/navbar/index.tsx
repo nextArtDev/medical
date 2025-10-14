@@ -95,7 +95,42 @@ export function NavbarDemo() {
 
 const DummyContent = () => {
   return (
-    <div className="container mx-auto p-8 pt-24">
+    <div className="relative   mx-auto p-8  ">
+      {/* Hidden SVG for clip path definition */}
+      <svg
+        width="0"
+        height="0"
+        className="absolute fill-transparent stroke-transparent bg-transparent"
+      >
+        <defs>
+          <clipPath id="heroClipPath" clipPathUnits="objectBoundingBox">
+            <path d="M0.973,0 C0.986,0 1,0.012 1,0.027 V0.974 C1,0.986 0.986,1 0.973,1 H0.027 C0.012,1 0,0.986 0,0.974 V0.027 C0,0.012 0.012,0 0.027,0 H0.973 Z M0.501,0.249 C0.357,0.249 0.24,0.361 0.24,0.5 C0.24,0.606 0.309,0.697 0.405,0.734 H0.378 C0.36,0.734 0.346,0.747 0.346,0.764 V0.83 C0.346,0.847 0.36,0.861 0.378,0.861 H0.625 C0.643,0.861 0.657,0.847 0.657,0.83 V0.764 C0.657,0.747 0.643,0.734 0.625,0.734 H0.597 C0.694,0.697 0.762,0.606 0.762,0.5 C0.762,0.361 0.645,0.249 0.501,0.249 Z M0.597,0.734 C0.567,0.745 0.535,0.751 0.501,0.751 C0.467,0.751 0.435,0.745 0.405,0.734 H0.597 Z" />
+          </clipPath>
+        </defs>
+      </svg>
+
+      {/* Hero content container */}
+      <div className="w-full  ">
+        {/* Glass effect container with clip path */}
+        <div
+          className="relative w-full h-96 md:h-[500px] rounded-lg overflow-hidden"
+          style={{
+            clipPath: 'url(#heroClipPath)',
+          }}
+        >
+          {/* Background image */}
+          <div
+            className="absolute inset-0 bg-cover bg-center"
+            style={{
+              backgroundImage:
+                'url(https://images.unsplash.com/photo-1519681393784-d120267933ba?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80)',
+            }}
+          ></div>
+
+          {/* Glass effect overlay */}
+          <div className="absolute inset-0 bg-white/10 backdrop-blur-md border border-white/20"></div>
+        </div>
+      </div>
       <h1 className="mb-4 text-center text-3xl font-bold">
         Check the navbar at the top of the container
       </h1>

@@ -1,9 +1,11 @@
+import ToothGlassPage from '@/components/home/hero/AppleTypeHero'
 import { ThemeSwitcher } from '@/components/shared/theme-switcher'
 import { Button } from '@/components/ui/button'
 
 export default function Home() {
   return (
     <section className="relative min-h-screen w-screen flex  flex-col gap-10 items-center justify-center h-full ">
+      <ToothGlassPage />
       <div className="absolute top-10">
         <ThemeSwitcher />
       </div>
