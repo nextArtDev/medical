@@ -1,16 +1,10 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
   output   = "../lib/generated/prisma"
 }
 
 datasource db {
-  provider = "mysql"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -21,11 +15,15 @@ enum Role {
 }
 
 model User {
-  id            String  @id
-  name          String  @db.Text
+  id            String   @id
+  name          String   @db.Text
+  codeNumber    String?
   email         String
-  emailVerified Boolean @default(false)
-  image         String? @db.Text
+  emailVerified Boolean  @default(false)
+  image         String?  @db.Text
+  isRootAdmin   Boolean? @default(false)
+
+  dateOfBirth DateTime?
 
   role Role @default(user)
 
@@ -35,11 +33,24 @@ model User {
   phoneNumber         String?  @db.Text
   phoneNumberVerified Boolean?
 
+  address  String? @db.Text
+  isActive Boolean @default(true)
+
   sessions   Session[]
   accounts   Account[]
   banned     Boolean?  @default(false)
   banReason  String?   @db.Text
   banExpires DateTime?
+
+  doctorProfile       DoctorProfile?
+  doctorLeaves        DoctorLeave[]
+  doctorAppointments  Appointment[]       @relation("DoctorAppointments")
+  userAppointments    Appointment[]       @relation("UserAppointments")
+  doctorTestimonials  DoctorTestimonial[] @relation("DoctorTestimonials")
+  patientTestimonials DoctorTestimonial[] @relation("PatientTestimonials")
+  paymentDetails      PaymentDetails[]
+  orders              Order[]
+  images              Image[]
 
   @@unique([email])
   @@map("user")
@@ -100,6 +111,22 @@ model OtpRateLimit {
   @@index([phoneNumber])
 }
 
+model Image {
+  id         String   @id @default(cuid())
+  url        String   @db.Text
+  key        String   @db.Text
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  user   User?   @relation(fields: [userId], references: [id])
+  userId String?
+
+  bannerImage   BannerImage? @relation(name: "BannerImageToImage")
+  bannerImageId String?
+
+  @@unique([userId, bannerImageId])
+}
+
 enum LeaveType {
   FULL_DAY
   MORNING
@@ -120,4 +147,242 @@ enum AppointmentStatus {
   CANCELLED
   NO_SHOW
   CASH
+}
+
+model DoctorProfile {
+  profileId       String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId          String   @unique
+  specialty       String
+  brief           String   @db.Text
+  credentials     String
+  // languages       String[]
+  rating          Float    @default(0)
+  reviewCount     Int      @default(0)
+  specializations String[]
+  isActive        Boolean  @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // --- Relationships ---
+  doctor User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("doctor_profiles")
+}
+
+// Tracks the leave and unavailability of doctors.
+model DoctorLeave {
+  leaveId   String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  doctorId  String
+  leaveDate DateTime  @db.Date
+  leaveType LeaveType
+  reason    String?   @db.Text
+  createdAt DateTime  @default(now())
+
+  // --- Relationships ---
+  doctor User @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+
+  // --- Constraints ---
+  @@unique([doctorId, leaveDate])
+  @@map("doctor_leaves")
+}
+
+// Stores global application settings for appointment scheduling.
+model AppSettings {
+  id                      String @id @default("global")
+  slotsPerHour            Int    @default(2)
+  startTime               String @default("09:00")
+  endTime                 String @default("17:00")
+  slotReservationDuration Int    @default(10) // in minutes
+
+  @@map("app_settings")
+}
+
+// Defines which days of the week are considered working days.
+model WorkingDay {
+  dayId        String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  dayOfWeek    Int     @unique // Sunday=0, Monday=1, ...
+  isWorkingDay Boolean @default(true)
+
+  @@map("working_days")
+}
+
+model Appointment {
+  appointmentId        String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  doctorId             String
+  userId               String?
+  guestIdentifier      String?
+  patientType          PatientType
+  patientRelation      String?
+  patientName          String
+  paymentMethod        String?
+  paymentResult        Json?
+  paidAt               DateTime?
+  appointmentStartUTC  DateTime
+  appointmentEndUTC    DateTime
+  phoneNumber          String?
+  reasonForVisit       String?           @db.Text
+  additionalNotes      String?           @db.Text
+  patientDateOfBirth   DateTime?
+  reservationExpiresAt DateTime?
+  status               AppointmentStatus @default(PAYMENT_PENDING)
+  createdAt            DateTime          @default(now())
+  updatedAt            DateTime          @updatedAt
+
+  // --- Relationships ---
+  doctor User  @relation("DoctorAppointments", fields: [doctorId], references: [id])
+  user   User? @relation("UserAppointments", fields: [userId], references: [id])
+
+  testimonial DoctorTestimonial?
+  Order       Order[]
+
+  // transactions Transaction[]
+  @@map("appointments")
+}
+
+model DoctorTestimonial {
+  testimonialId   String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  appointmentId   String @unique @db.Uuid
+  doctorId        String
+  patientId       String
+  testimonialText String @db.Text
+
+  rating    Float?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  isFeatured Boolean @default(false)
+  isPending  Boolean @default(true)
+
+  // --- Relationships ---
+  appointment Appointment @relation(fields: [appointmentId], references: [appointmentId], onDelete: Cascade)
+  doctor      User        @relation("DoctorTestimonials", fields: [doctorId], references: [id])
+  patient     User        @relation("PatientTestimonials", fields: [patientId], references: [id])
+
+  @@map("doctor_testimonials")
+}
+
+model BannerImage {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name      String
+  image     Image    @relation(name: "BannerImageToImage", fields: [imageId], references: [id], onDelete: Cascade)
+  imageId   String   @unique @db.Text
+  fileKey   String   @unique
+  order     Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("banner_images")
+}
+
+// 12. Department Table
+// Stores a list of medical departments or categories.
+model Department {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name      String   @unique
+  iconName  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("departments")
+}
+
+// 13. FAQ Table
+// Stores frequently asked questions and their answers.
+model FAQ {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  question  String   @db.Text
+  answer    String   @db.Text
+  order     Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("faqs")
+}
+
+enum PaymentStatus {
+  Pending
+  Paid
+  Failed
+  Declined
+  Cancelled
+  Refunded
+  PartiallyRefunded
+  Chargeback
+}
+
+model Order {
+  id String @id @default(uuid())
+
+  appointmentId String    @db.Uuid
+  doctorId      String
+  amount        Float
+  currency      String
+  paidAt        DateTime? @db.Timestamp(6)
+  notes         String?
+
+  paymentStatus  PaymentStatus   @default(Pending)
+  authority      String?
+  paymentDetails PaymentDetails? @relation("PaymentDetailsToOrder")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  appointment Appointment @relation(fields: [appointmentId], references: [appointmentId], onDelete: Cascade)
+  doctor      User        @relation(fields: [doctorId], references: [id])
+
+  @@map("transactions")
+}
+
+model PaymentDetails {
+  id String @id @default(uuid())
+
+  status        String?
+  amount        Float?
+  Authority     String? @db.Text
+  // currency        String
+  transactionId String?
+  orderId       String  @unique
+  order         Order   @relation("PaymentDetailsToOrder", fields: [orderId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  User      User     @relation(fields: [userId], references: [id])
+  userId    String
+
+  @@index([orderId])
+  @@index([userId])
+}
+
+model PaymentLock {
+  id        String   @id @default(uuid())
+  orderId   String   @unique
+  authority String
+  lockedAt  DateTime @default(now())
+  expiresAt DateTime // Lock expires after 5 minutes
+
+  @@index([orderId])
+  @@index([expiresAt])
+}
+
+model PaymentAttempt {
+  id        String   @id @default(uuid())
+  orderId   String
+  authority String
+  status    String // 'PENDING', 'SUCCESS', 'FAILED', 'USED'
+  amount    Float
+  createdAt DateTime @default(now())
+
+  // Prevent duplicate authorities per order
+  @@unique([orderId, authority])
+  @@index([orderId])
+  @@index([authority])
+}
+
+model PaymentRateLimit {
+  id        String   @id @default(cuid())
+  userId    String
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
 }
