@@ -1,11 +1,15 @@
 // import crypto from 'crypto'
 import { betterAuth } from 'better-auth'
 import { prismaAdapter } from 'better-auth/adapters/prisma'
-import { nextCookies } from 'better-auth/next-js'
+// If your Prisma file is located elsewhere, you can change the path
+// import { PrismaClient } from './generated/prisma'
 import { admin, phoneNumber } from 'better-auth/plugins'
 import prisma from './prisma'
-import { cache } from 'react'
+import { nextCookies } from 'better-auth/next-js'
 import { headers } from 'next/headers'
+import { cache } from 'react'
+// import { headers } from 'next/headers'
+
 export const auth = betterAuth({
   database: prismaAdapter(prisma, {
     provider: 'mysql', // or "mysql", "postgresql", ...etc
@@ -26,7 +30,6 @@ export const auth = betterAuth({
     },
   },
   plugins: [
-    admin(),
     phoneNumber({
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       sendOTP: async ({ phoneNumber, code }, request) => {
@@ -74,6 +77,7 @@ export const auth = betterAuth({
         // console.log({ user })
       },
     }),
+    admin(),
     nextCookies(),
   ],
   session: {
@@ -114,3 +118,11 @@ export const currentUser = cache(async () => {
 
   return user
 })
+
+// export const currentRole = async () => {
+// const session = await auth.api.getSession({
+//   headers: await headers(), // you need to pass the headers object.
+// })
+
+//   return session?.user?.role
+// }
