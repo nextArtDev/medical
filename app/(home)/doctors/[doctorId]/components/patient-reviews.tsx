@@ -8,9 +8,11 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import ReviewList from './review-list'
-import { usePaginatedReviews } from '@/hooks/use-paginated-reviews'
 import RatingStars from '@/components/shared/star-rating'
 import PaginationControls from '@/components/shared/pagination-controls'
+import { useQuery } from '@tanstack/react-query'
+import { getDoctorReviewsPaginated } from '@/lib/queries/server-home'
+import { Loader } from 'lucide-react'
 
 interface PatientReviewsProps {
   doctorId: string
@@ -23,15 +25,29 @@ export default function PatientReviews({
 }: PatientReviewsProps) {
   const [currentPage, setCurrentPage] = useState(1)
 
-  const { data, isLoading, error } = usePaginatedReviews(
-    doctorId,
-    currentPage,
-    10
-  )
+  const { data, isLoading, error } = useQuery({
+    queryKey: ['doctor-reviews', doctorId, currentPage],
+    queryFn: async () => {
+      const response = await getDoctorReviewsPaginated(
+        doctorId,
+        currentPage,
+        10
+      )
+
+      if (!response.success || !response.data) {
+        throw new Error(response.message || 'Failed to fetch reviews.')
+      }
+
+      return response.data
+    },
+    enabled: !!doctorId,
+    staleTime: 1000 * 60 * 5, // 5 minutes
+    gcTime: 1000 * 60 * 10, // 10 minutes (formerly cacheTime)
+  })
 
   const renderContent = () => {
     if (isLoading) {
-      return <p className="text-center py-4">Loading reviews...</p>
+      return <Loader className="animate-spin" />
     }
 
     if (error) {
