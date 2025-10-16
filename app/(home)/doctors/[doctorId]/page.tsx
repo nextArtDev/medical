@@ -1,12 +1,11 @@
 import { currentUser } from '@/lib/auth'
 import DoctorProfileTopCard from './components/doctorprofile-topcard'
 import { notFound } from 'next/navigation'
-import AppointmentScheduler from './components/schedule-appointment'
+// import AppointmentScheduler from './components/schedule-appointment'
 import DoctorProfileAbout from './components/about'
 import PatientReviews from './components/patient-reviews'
 import { getDoctorProfile } from '@/lib/queries/home'
 import { cleanupExpiredReservations } from './lib/actions'
-
 interface Params {
   doctorId: string
 }
@@ -68,21 +67,21 @@ export default async function DoctorProfilePage({
       <div className="flex flex-col gap-6 md:gap-8 md:max-w-[908px] md:flex-1">
         <DoctorProfileTopCard
           //   id={doctor.id}
-          user={doctor.doctorProfile.user}
+          name={doctor.name}
           credentials={doctor.doctorProfile.credentials}
           specialty={doctor.doctorProfile.specialty}
           specializations={doctor.doctorProfile.specializations}
           rating={doctor.doctorProfile.rating}
           reviewCount={doctor.doctorProfile.reviewCount}
-          images={doctor.doctorProfile.images}
+          images={doctor.doctorProfile.images || [{ url: '/images/9.jpg' }]}
           brief={doctor.doctorProfile.brief}
         />
         <div className="md:hidden">
-          <AppointmentScheduler
+          {/* <AppointmentScheduler
             doctorId={doctor.id}
             userId={userId}
             userRole={userRole}
-          />
+          /> */}
         </div>
         <DoctorProfileAbout
           name={doctor.name}
@@ -94,11 +93,11 @@ export default async function DoctorProfilePage({
         />
       </div>
       <div className="hidden md:block ">
-        <AppointmentScheduler
+        {/* <AppointmentScheduler
           doctorId={doctor.id}
           userId={userId}
           userRole={userRole}
-        />
+        /> */}
       </div>
     </div>
   )

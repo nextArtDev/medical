@@ -1,26 +1,26 @@
-import { Star } from "lucide-react";
+import { Star } from 'lucide-react'
 
 interface RatingStarsProps {
-  rating: number;
-  size?: number;
-  color?: string;
+  rating: number
+  size?: number
+  color?: string
 }
 
 export default function RatingStars({
   rating,
   size = 16,
-  color = "#FACC15",
+  color = '#FACC15',
 }: RatingStarsProps) {
   return (
-    <div className="flex items-center">
+    <div dir="ltr" className="flex items-center">
       {Array.from({ length: 5 }, (_, i) => {
-        const starNumber = i + 1; //i = 0,1,2,3,4 stars =1,2,3,4,5
+        const starNumber = i + 1 //i = 0,1,2,3,4 stars =1,2,3,4,5
 
         if (starNumber <= rating) {
           // This is a full star.
           return (
             <Star key={`full-${i}`} fill={color} color={color} size={size} />
-          );
+          )
         }
         if (rating >= starNumber - 0.5) {
           //rating 3.5 star number = 4
@@ -44,17 +44,15 @@ export default function RatingStars({
                 color={color}
                 size={size}
                 className="absolute inset-0"
-                style={{ clipPath: "inset(0 50% 0 0)" }}
+                style={{ clipPath: 'inset(0 50% 0 0)' }}
               />
             </div>
-          );
+          )
         }
 
         //empty star
-        return (
-          <Star key={`empty-${i}`} fill="none" color={color} size={size} />
-        );
+        return <Star key={`empty-${i}`} fill="none" color={color} size={size} />
       })}
     </div>
-  );
+  )
 }

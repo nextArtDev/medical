@@ -267,3 +267,10 @@ export interface PaginatedResult<T> {
   limit: number
   totalPages: number
 }
+
+export interface DoctorReviewsPaginatedData {
+  reviews: DoctorReview[]
+  totalReviews: number
+  totalPages: number
+  currentPage: number
+}

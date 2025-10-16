@@ -1,4 +1,5 @@
 import { NavbarDemo } from '@/components/home/navbar'
+import QueryProviders from '@/components/shared/tanstack-provider'
 import type { Metadata } from 'next'
 import { ViewTransitions } from 'next-view-transitions'
 
@@ -14,10 +15,12 @@ export default function RootLayout({
 }>) {
   return (
     <section className="relative w-full h-full ">
-      <ViewTransitions>
-        <NavbarDemo />
-        {children}
-      </ViewTransitions>
+      <QueryProviders>
+        <ViewTransitions>
+          <NavbarDemo />
+          {children}
+        </ViewTransitions>
+      </QueryProviders>
     </section>
   )
 }

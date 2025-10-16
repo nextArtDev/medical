@@ -1,8 +1,5 @@
 'use client'
-// import { usePaginatedReviews } from "@/hooks/use-paginated-reviews";
-// import { PAGE_SIZE } from "@/lib/constants";
-// import ReviewList from "@/components/molecules/review-list";
-// import PaginationControls from "@/components/molecules/pagination-controls";
+import { useState } from 'react'
 import {
   Card,
   CardContent,
@@ -24,52 +21,60 @@ export default function PatientReviews({
   doctorId,
   averageRating,
 }: PatientReviewsProps) {
-  const {
+  const [currentPage, setCurrentPage] = useState(1)
+
+  const { data, isLoading, error } = usePaginatedReviews(
+    doctorId,
     currentPage,
-    reviews,
-    totalReviews,
-    totalPages,
-    loading,
-    error,
-    handlePageChange,
-  } = usePaginatedReviews(doctorId)
+    10
+  )
 
   const renderContent = () => {
-    if (loading) {
-      // In a real app, you might use a skeleton loader here
-      return <div className="text-center py-10">Loading reviews...</div>
+    if (isLoading) {
+      return <p className="text-center py-4">Loading reviews...</p>
     }
+
     if (error) {
       return (
-        <div className="text-center py-10 text-red-500">Error: {error}</div>
+        <p className="text-center py-4 text-red-500">
+          Error:{' '}
+          {error instanceof Error ? error.message : 'Failed to load reviews'}
+        </p>
       )
     }
-    if (reviews.length === 0) {
-      return <div className="text-center py-10">No reviews found.</div>
+
+    if (!data || data.reviews.length === 0) {
+      return <p className="text-center py-4">No reviews found.</p>
     }
+
     return (
       <ReviewList
-        reviews={reviews}
+        reviews={data.reviews}
         currentPage={currentPage}
         totalReviews={totalReviews}
-        // reviewsPerPage={PAGE_SIZE}
         reviewsPerPage={5}
       />
     )
   }
 
+  const totalReviews = data?.totalReviews ?? 0
+  const totalPages = data?.totalPages ?? 0
+  const hasReviews = data && data.reviews.length > 0
+
   return (
-    <Card className="w-full gap-8 shadow-small p-4 md:p-6 rounded-lg border-0 bg-background overflow-hidden ">
+    <Card>
       {/* Card Header */}
-      <CardHeader className="flex flex-row justify-between p-0 items-center">
-        <CardTitle>
-          <h3>Patient Reviews</h3>
-        </CardTitle>
-        <div className="flex items-center gap-2 md:gap-3">
-          <h1>{averageRating.toFixed(1)}</h1>
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <CardTitle>Patient Reviews</CardTitle>
+        </div>
+
+        <div className="flex items-center gap-2 mt-2">
+          <p className="text-2xl font-bold">{averageRating.toFixed(1)}</p>
+
           <div className="flex flex-col">
             <RatingStars rating={averageRating} />
-            <p className="body-small text-text-body-subtle">
+            <p className="text-sm text-muted-foreground">
               {totalReviews} reviews
             </p>
           </div>
@@ -77,19 +82,18 @@ export default function PatientReviews({
       </CardHeader>
 
       {/* Card Content */}
-      <CardContent className="p-0">{renderContent()}</CardContent>
+      <CardContent>{renderContent()}</CardContent>
 
-      {/* Card Footer (only shown if there are reviews and more than one page) */}
-      {!loading && !error && reviews.length > 0 && totalPages > 1 && (
-        <CardFooter className="flex justify-between items-center w-full p-0">
-          <p className="body-small">
+      {/* Card Footer */}
+      {!isLoading && !error && hasReviews && totalPages > 1 && (
+        <CardFooter className="flex flex-col gap-2">
+          <p className="text-sm text-muted-foreground">
             Page {currentPage} of {totalPages}
           </p>
           <PaginationControls
             currentPage={currentPage}
             totalPages={totalPages}
-            onPageChange={handlePageChange}
-            isDisabled={loading}
+            onPageChange={setCurrentPage}
           />
         </CardFooter>
       )}

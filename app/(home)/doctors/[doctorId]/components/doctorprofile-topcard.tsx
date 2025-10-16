@@ -9,7 +9,7 @@ interface DoctorProfile {
   // profileId: string
   images: { url: string }[] | null
   // userId: string
-  user: UserProfile
+  name: string
   specialty: string
   brief: string
   credentials: string
@@ -21,7 +21,7 @@ interface DoctorProfile {
   // updatedAt: Date
 }
 export default function DoctorProfileTopCard({
-  user,
+  name,
   credentials,
   // speciality,
   specialty,
@@ -48,9 +48,7 @@ export default function DoctorProfileTopCard({
             </div>
           ) : (
             <div className="aspect-square bg-gray-200 flex items-center justify-center rounded-lg">
-              <span className="text-gray-400 text-xl">
-                {user.name?.charAt(0)}
-              </span>
+              <span className="text-gray-400 text-xl">{name?.charAt(0)}</span>
             </div>
           )}
         </div>
@@ -58,7 +56,7 @@ export default function DoctorProfileTopCard({
         {/* Doctor's Information */}
         <div className="flex-1">
           <h2 className="text-text-title">
-            {user.name}, {credentials}
+            {name}, {credentials}
           </h2>
           <h4 className="text-text-body-subtle mt-1">{specialty}</h4>
 
