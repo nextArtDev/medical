@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   Card,
   CardContent,
@@ -10,10 +10,12 @@ import {
 import ReviewList from './review-list'
 import RatingStars from '@/components/shared/star-rating'
 import PaginationControls from '@/components/shared/pagination-controls'
-import { useQuery } from '@tanstack/react-query'
+import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
 import { getDoctorReviewsPaginated } from '@/lib/queries/server-home'
-import { Loader } from 'lucide-react'
-
+import { Loader, Loader2 } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { motion, useInView } from 'framer-motion'
+import { ScrollArea } from '@/components/ui/scroll-area'
 interface PatientReviewsProps {
   doctorId: string
   averageRating: number
@@ -25,14 +27,17 @@ export default function PatientReviews({
 }: PatientReviewsProps) {
   const [currentPage, setCurrentPage] = useState(1)
 
-  const { data, isLoading, error } = useQuery({
-    queryKey: ['doctor-reviews', doctorId, currentPage],
-    queryFn: async () => {
-      const response = await getDoctorReviewsPaginated(
-        doctorId,
-        currentPage,
-        10
-      )
+  const {
+    data,
+    isLoading,
+    error,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteQuery({
+    queryKey: ['doctor-reviews-infinite', doctorId, 10],
+    queryFn: async ({ pageParam = 1 }) => {
+      const response = await getDoctorReviewsPaginated(doctorId, pageParam, 10)
 
       if (!response.success || !response.data) {
         throw new Error(response.message || 'Failed to fetch reviews.')
@@ -40,14 +45,43 @@ export default function PatientReviews({
 
       return response.data
     },
+    getNextPageParam: (lastPage) => {
+      // Return next page number if there are more pages, otherwise undefined
+      if (lastPage.currentPage < lastPage.totalPages) {
+        return lastPage.currentPage + 1
+      }
+      return undefined
+    },
+    initialPageParam: 1,
     enabled: !!doctorId,
     staleTime: 1000 * 60 * 5, // 5 minutes
-    gcTime: 1000 * 60 * 10, // 10 minutes (formerly cacheTime)
   })
+  // Ref for the load more trigger
+  const loadMoreRef = useRef<HTMLDivElement>(null)
+  const isInView = useInView(loadMoreRef, {
+    margin: '100px', // Trigger 100px before the element comes into view
+  })
+  // Set up intersection observer for auto-loading when scrolling into view
+  // Trigger fetchNextPage when the element comes into view
+  useEffect(() => {
+    if (isInView && hasNextPage && !isFetchingNextPage) {
+      fetchNextPage()
+    }
+  }, [isInView, hasNextPage, isFetchingNextPage, fetchNextPage])
+
+  const allReviews = data?.pages.flatMap((page) => page.reviews) ?? []
+  const totalReviews = data?.pages[0]?.totalReviews ?? 0
+  const totalPages = data?.pages[0]?.totalPages ?? 0
+  const currentLoadedPages = data?.pages.length ?? 0
 
   const renderContent = () => {
     if (isLoading) {
-      return <Loader className="animate-spin" />
+      return (
+        <div className="flex items-center justify-center py-8">
+          <Loader2 className="h-6 w-6 animate-spin" />
+          <span className="ml-2">Loading reviews...</span>
+        </div>
+      )
     }
 
     if (error) {
@@ -59,23 +93,58 @@ export default function PatientReviews({
       )
     }
 
-    if (!data || data.reviews.length === 0) {
+    if (allReviews.length === 0) {
       return <p className="text-center py-4">No reviews found.</p>
     }
 
     return (
-      <ReviewList
-        reviews={data.reviews}
-        currentPage={currentPage}
-        totalReviews={totalReviews}
-        reviewsPerPage={5}
-      />
+      <ScrollArea className="min-h-fit max-h-[70vh] pr-4">
+        <ReviewList
+          reviews={allReviews}
+          currentPage={currentPage}
+          totalReviews={totalReviews}
+          reviewsPerPage={10}
+        />
+
+        {/* Load More Trigger with Framer Motion */}
+        {hasNextPage && (
+          <motion.div
+            ref={loadMoreRef}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="flex justify-center py-6"
+          >
+            {isFetchingNextPage && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="flex items-center"
+              >
+                <Loader2 className="h-5 w-5 animate-spin" />
+                <span className="ml-2 text-sm text-muted-foreground">
+                  Loading more reviews...
+                </span>
+              </motion.div>
+            )}
+          </motion.div>
+        )}
+
+        {/* End of Reviews Message */}
+        {!hasNextPage && allReviews.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.2 }}
+            className="text-center py-6"
+          >
+            <p className="text-sm text-muted-foreground">
+              You've reached the end of reviews
+            </p>
+          </motion.div>
+        )}
+      </ScrollArea>
     )
   }
-
-  const totalReviews = data?.totalReviews ?? 0
-  const totalPages = data?.totalPages ?? 0
-  const hasReviews = data && data.reviews.length > 0
 
   return (
     <Card>
@@ -95,24 +164,24 @@ export default function PatientReviews({
             </p>
           </div>
         </div>
+
+        {/* Show loading progress */}
+        {allReviews.length > 0 && (
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="text-xs text-muted-foreground mt-2"
+          >
+            Showing {allReviews.length} of {totalReviews} reviews
+            {totalPages > 1 && ` (Page ${currentLoadedPages} of ${totalPages})`}
+          </motion.p>
+        )}
       </CardHeader>
 
-      {/* Card Content */}
-      <CardContent>{renderContent()}</CardContent>
-
-      {/* Card Footer */}
-      {!isLoading && !error && hasReviews && totalPages > 1 && (
-        <CardFooter className="flex flex-col gap-2">
-          <p className="text-sm text-muted-foreground">
-            Page {currentPage} of {totalPages}
-          </p>
-          <PaginationControls
-            currentPage={currentPage}
-            totalPages={totalPages}
-            onPageChange={setCurrentPage}
-          />
-        </CardFooter>
-      )}
+      {/* Card Content with ScrollArea */}
+      <CardContent className="p-0">
+        <div className="px-6 pb-6">{renderContent()}</div>
+      </CardContent>
     </Card>
   )
 }
