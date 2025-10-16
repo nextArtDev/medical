@@ -1,16 +1,11 @@
-// import { getDoctorDetails } from '@/lib/actions/doctor.actions'
-
-// import DoctorProfileAbout from '@/components/organisms/doctor-profile/about'
-// import PatientReviews from '@/components/organisms/doctor-profile/patient-reviews'
-// import AppointmentScheduler from '@/components/organisms/doctor-profile/schedule-appointment'
-// import { auth } from '@/auth'
-// import { cleanupExpiredReservations } from '@/lib/actions/appointment.actions'
 import { currentUser } from '@/lib/auth'
 import DoctorProfileTopCard from './components/doctorprofile-topcard'
 import { notFound } from 'next/navigation'
 import AppointmentScheduler from './components/schedule-appointment'
 import DoctorProfileAbout from './components/about'
 import PatientReviews from './components/patient-reviews'
+import { getDoctorProfile } from '@/lib/queries/home'
+import { cleanupExpiredReservations } from './lib/actions'
 
 interface Params {
   doctorId: string
@@ -28,7 +23,7 @@ export default async function DoctorProfilePage({
 
   let doctorActionResponse
   try {
-    doctorActionResponse = await getDoctorDetails(doctorId)
+    doctorActionResponse = await getDoctorProfile(doctorId)
   } catch (error) {
     console.error('Error fetching doctor details:', error)
     return (
@@ -72,16 +67,15 @@ export default async function DoctorProfilePage({
     <div className="w-full flex flex-col md:flex-row max-w-[1376px] mx-auto gap-8 p-6 md:p-8">
       <div className="flex flex-col gap-6 md:gap-8 md:max-w-[908px] md:flex-1">
         <DoctorProfileTopCard
-          id={doctor.id}
-          name={doctor.name}
-          credentials={doctor.credentials}
-          speciality={doctor.speciality}
-          languages={doctor.languages}
-          specializations={doctor.specializations}
-          rating={doctor.rating}
-          reviewCount={doctor.reviewCount}
-          image={doctor.image}
-          brief={doctor.brief}
+          //   id={doctor.id}
+          user={doctor.doctorProfile.user}
+          credentials={doctor.doctorProfile.credentials}
+          specialty={doctor.doctorProfile.specialty}
+          specializations={doctor.doctorProfile.specializations}
+          rating={doctor.doctorProfile.rating}
+          reviewCount={doctor.doctorProfile.reviewCount}
+          images={doctor.doctorProfile.images}
+          brief={doctor.doctorProfile.brief}
         />
         <div className="md:hidden">
           <AppointmentScheduler
@@ -90,8 +84,14 @@ export default async function DoctorProfilePage({
             userRole={userRole}
           />
         </div>
-        <DoctorProfileAbout name={doctor.name} brief={doctor.brief} />
-        <PatientReviews doctorId={doctor.id} averageRating={doctor.rating} />
+        <DoctorProfileAbout
+          name={doctor.name}
+          brief={doctor.doctorProfile.brief}
+        />
+        <PatientReviews
+          doctorId={doctor.id}
+          averageRating={doctor.doctorProfile.rating}
+        />
       </div>
       <div className="hidden md:block ">
         <AppointmentScheduler

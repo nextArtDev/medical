@@ -1,4 +1,5 @@
 import RatingStars from '@/components/shared/star-rating'
+import { DoctorReview } from '@/types/home'
 
 interface ReviewListProps {
   reviews: DoctorReview[]

@@ -123,14 +123,23 @@ export async function updateUserProfile(
 export async function getDoctorProfile(
   userId: string
 ): Promise<ApiResponse<DoctorWithProfile>> {
+  if (!userId) {
+    return {
+      success: false,
+      message: 'Doctor ID is required.',
+    }
+  }
+
   try {
     const doctor = await prisma.user.findUnique({
       where: {
         id: userId,
         role: 'doctor',
+        isActive: true, //<--- ADD THIS LINE
       },
       include: {
         doctorProfile: true,
+        images: { select: { url: true } },
       },
     })
 

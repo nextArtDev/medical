@@ -11,6 +11,9 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import ReviewList from './review-list'
+import { usePaginatedReviews } from '@/hooks/use-paginated-reviews'
+import RatingStars from '@/components/shared/star-rating'
+import PaginationControls from '@/components/shared/pagination-controls'
 
 interface PatientReviewsProps {
   doctorId: string
@@ -49,7 +52,8 @@ export default function PatientReviews({
         reviews={reviews}
         currentPage={currentPage}
         totalReviews={totalReviews}
-        reviewsPerPage={PAGE_SIZE}
+        // reviewsPerPage={PAGE_SIZE}
+        reviewsPerPage={5}
       />
     )
   }

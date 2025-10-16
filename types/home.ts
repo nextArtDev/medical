@@ -3,6 +3,7 @@ export interface ApiResponse<T> {
   success: boolean
   data?: T
   error?: string
+  errorType?: string
   message?: string
 }
 
@@ -39,6 +40,21 @@ export interface DoctorProfile {
 
 export interface DoctorWithProfile extends UserProfile {
   doctorProfile: DoctorProfile
+}
+
+export interface DoctorReview {
+  id: string
+  rating: number | null
+  reviewDate: string
+  testimonialText: string
+  patientName: string
+  patientImage: string | null
+}
+export interface TimeSlot {
+  startTime: string
+  endTime: string
+  startTimeUTC: Date
+  endTimeUTC: Date
 }
 
 // Appointment related types
