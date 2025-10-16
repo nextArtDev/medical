@@ -6,6 +6,7 @@ import DoctorProfileAbout from './components/about'
 import PatientReviews from './components/patient-reviews'
 import { getDoctorProfile } from '@/lib/queries/home'
 import { cleanupExpiredReservations } from './lib/actions'
+import AppointmentScheduler from './components/schedule-appointment'
 interface Params {
   doctorId: string
 }
@@ -77,11 +78,11 @@ export default async function DoctorProfilePage({
           brief={doctor.doctorProfile.brief}
         />
         <div className="md:hidden">
-          {/* <AppointmentScheduler
+          <AppointmentScheduler
             doctorId={doctor.id}
             userId={userId}
             userRole={userRole}
-          /> */}
+          />
         </div>
         <DoctorProfileAbout
           name={doctor.name}
@@ -93,11 +94,11 @@ export default async function DoctorProfilePage({
         />
       </div>
       <div className="hidden md:block ">
-        {/* <AppointmentScheduler
+        <AppointmentScheduler
           doctorId={doctor.id}
           userId={userId}
           userRole={userRole}
-        /> */}
+        />
       </div>
     </div>
   )

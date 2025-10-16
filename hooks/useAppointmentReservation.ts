@@ -1,8 +1,5 @@
 import { useTransition } from 'react'
-import {
-  createGuestAppointment,
-  createOrUpdateAppointmentReservation,
-} from '@/lib/actions/appointment.actions'
+
 import { useRouter } from 'next/navigation'
 import {
   ServerActionResponse,

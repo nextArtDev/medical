@@ -1,10 +1,12 @@
 import { useState, useCallback, useEffect } from 'react'
 import { toZonedTime, format } from 'date-fns-tz'
-import { getAvailableDoctorSlots } from '@/lib/actions/doctor.actions'
-import { getPendingAppointmentForDoctor } from '@/lib/actions/appointment.actions'
 
 import { TimeSlot } from '@/types/home'
 import { toast } from 'sonner'
+import {
+  getAvailableDoctorSlots,
+  getPendingAppointmentForDoctor,
+} from '@/lib/queries/server-home'
 
 export const useAppointmentSlots = (doctorId: string, userId?: string) => {
   // --- State Management ---

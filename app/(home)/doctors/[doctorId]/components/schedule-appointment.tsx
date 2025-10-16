@@ -33,13 +33,13 @@ export default function AppointmentScheduler({
     fetchSlotsForDate,
   } = useAppointmentSlots(doctorId, userId)
 
-  const { mutate: reserveApointment, isPending } = useAppointmentReservation({
-    userId,
-    onConflict: () => {
-      setSelectedSlot(null)
-      if (selectedDate) fetchSlotsForDate(selectedDate)
-    },
-  })
+  // const { mutate: reserveApointment, isPending } = useAppointmentReservation({
+  //   userId,
+  //   onConflict: () => {
+  //     setSelectedSlot(null)
+  //     if (selectedDate) fetchSlotsForDate(selectedDate)
+  //   },
+  // })
 
   // 2. Local state for UI interaction
   const [selectedSlot, setSelectedSlot] = useState<TimeSlot | null>(null)
@@ -77,12 +77,12 @@ export default function AppointmentScheduler({
     }
     // Call the mutate function from the useAppointmentReservation hook
     // with the required payload.
-    reserveApointment({
-      doctorId,
-      date: format(selectedDate, 'yyyy-MM-dd'), // Format date to YYYY-MM-DD
-      startTime: selectedSlot.startTime,
-      endTime: selectedSlot.endTime,
-    })
+    // reserveApointment({
+    //   doctorId,
+    //   date: format(selectedDate, 'yyyy-MM-dd'), // Format date to YYYY-MM-DD
+    //   startTime: selectedSlot.startTime,
+    //   endTime: selectedSlot.endTime,
+    // })
   }
 
   const handleDateSelect = (date: Date | undefined) => {
@@ -196,7 +196,7 @@ export default function AppointmentScheduler({
           disabled={!selectedSlot || isLoading || userRole === 'ADMIN'}
           className="w-full py-6 body-semibold text-text-caption-2 mb-20"
         >
-          {isPending && <Loader2 className="animate-spin mr-2 h-4 w-4" />}
+          {/* {isPending && <Loader2 className="animate-spin mr-2 h-4 w-4" />} */}
           {getButtonText()}
         </Button>
       </div>
