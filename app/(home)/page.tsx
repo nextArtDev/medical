@@ -2,27 +2,41 @@ import DoctorCarousel from '@/components/home/doctor-card/doctor-carousel'
 import ToothGlassPage from '@/components/home/hero/AppleTypeHero'
 import { ThemeSwitcher } from '@/components/shared/theme-switcher'
 import { Button } from '@/components/ui/button'
+import { getAllDoctors } from '@/lib/queries/home'
+import { url } from 'inspector'
 
-export default function Home() {
+export default async function Home() {
+  const doctors = await getAllDoctors()
+  console.log(doctors)
   return (
     <section className="relative min-h-screen w-screen flex  flex-col gap-10 items-center justify-center h-full ">
       <ToothGlassPage />
-      <DoctorCarousel
-        items={[
-          {
-            images: [{ url: '/images/9.jpg' }],
-            slug: 'dr-john-doe',
-            name: 'Dr. John Doe',
-            specialization: { name: 'Cardiology' },
-          },
-          {
-            images: [{ url: '/images/9.jpg' }],
-            slug: 'dr-jane-smith',
-            name: 'Dr. Jane Smith',
-            specialization: { name: 'Neurology' },
-          },
-        ]}
-      />
+      {!!doctors?.data?.data?.length && (
+        <DoctorCarousel
+          items={doctors?.data?.data?.map((doctor) => {
+            return {
+              images: [{ url: ['/images/9.jpg'] }],
+              slug: doctor.id,
+              name: doctor.name,
+              specialization: 'doctor',
+            }
+          })}
+          // items={[
+          //   {
+          //     images: [{ url: '/images/9.jpg' }],
+          //     slug: 'dr-john-doe',
+          //     name: 'Dr. John Doe',
+          //     specialization: { name: 'Cardiology' },
+          //   },
+          //   {
+          //     images: [{ url: '/images/9.jpg' }],
+          //     slug: 'dr-jane-smith',
+          //     name: 'Dr. Jane Smith',
+          //     specialization: { name: 'Neurology' },
+          //   },
+          // ]}
+        />
+      )}
       <div className="absolute top-10">
         <ThemeSwitcher />
       </div>

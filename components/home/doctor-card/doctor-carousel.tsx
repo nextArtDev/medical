@@ -73,15 +73,15 @@ export default function DoctorCarousel({ items }: DoctorCarousel) {
                 href={`/products/${item.slug}`}
                 className="flex flex-col border-none  bg-transparent gap-4 rounded-t-xl rounded-b-4xl overflow-hidden" /* Switched to flex-col for consistent height; moved gap here */
               >
-                {!!item.images && (
+                {!!item?.images && (
                   <figure className="relative w-full aspect-square bg-gradient-to-br from-blue-400 via-white to-blue-300   border-none">
                     {' '}
                     {/* Fixed aspect-square for uniform image height */}
                     <Image
                       unoptimized
                       src={
-                        item.images.map((img) => img.url)[0] ||
-                        '/images/fallback-image.webp'
+                        // item.images.map((img) => img.url)[0] ||
+                        '/images/9.jpg' || '/images/fallback-image.webp'
                       }
                       fill
                       alt={item.name!}
