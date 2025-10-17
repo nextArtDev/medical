@@ -209,8 +209,8 @@ export async function getAllDoctors(
       whereClause.doctorLeaves = {
         none: {
           leaveDate: {
-            gte: startOfDay,
-            lte: endOfDay,
+            gte: new Date(startOfDay),
+            lte: new Date(endOfDay),
           },
         },
       }
@@ -407,8 +407,8 @@ export async function getAppointmentsByUserId(
 
     if (startDate && endDate) {
       whereClause.appointmentStartUTC = {
-        gte: startDate,
-        lte: endDate,
+        gte: new Date(startDate),
+        lte: new Date(endDate),
       }
     }
 
@@ -480,8 +480,8 @@ export async function createAppointment(
           },
           {
             AND: [
-              { appointmentStartUTC: { lt: data.appointmentEndUTC } },
-              { appointmentEndUTC: { gte: data.appointmentEndUTC } },
+              { appointmentStartUTC: { lt: new Date(data.appointmentEndUTC) } },
+              { appointmentEndUTC: { gte: new Date(data.appointmentEndUTC) } },
             ],
           },
         ],
@@ -697,8 +697,8 @@ export async function getDoctorAvailability(
           in: ['PAYMENT_PENDING', 'BOOKING_CONFIRMED'],
         },
         appointmentStartUTC: {
-          gte: startOfDay,
-          lte: endOfDay,
+          gte: new Date(startOfDay),
+          lte: new Date(endOfDay),
         },
       },
       select: {

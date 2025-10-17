@@ -228,8 +228,8 @@ export async function getAvailableDoctorSlots({
       where: {
         doctorId,
         appointmentStartUTC: {
-          gte: dayStartInAppTz,
-          lte: dayEndInAppTz,
+          gte: new Date(dayStartInAppTz),
+          lte: new Date(dayEndInAppTz),
         },
         status: {
           in: [
