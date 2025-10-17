@@ -1,9 +1,12 @@
+# Before Changing navigation behavior of months
+
+```ts
 'use client'
 import { Calendar } from '@/components/ui/calendar'
 import { Button } from '@/components/ui/button'
 import { useAppointmentSlots } from '@/hooks/useAppointmentSlots'
 import { useState, useEffect } from 'react'
-import { startOfMonth, addMonths, startOfDay, isAfter } from 'date-fns-jalali'
+import { startOfMonth, addMonths, startOfDay, isAfter } from 'date-fns'
 import { Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { TimeSlot } from '@/types/home'
@@ -44,10 +47,9 @@ export default function AppointmentScheduler({
     }
   }, [initialTimeSlot, timeSlots])
 
-  // Sync calendar month with selected date, but only when a date is explicitly selected
+  // Sync calendar month with selected date
   useEffect(() => {
-    if (selectedDate && !currentMonth) {
-      // Only set currentMonth if it's not already set
+    if (selectedDate) {
       setCurrentMonth(selectedDate)
     }
   }, [selectedDate])
@@ -65,8 +67,6 @@ export default function AppointmentScheduler({
       setDate(date)
       setSelectedSlot(null)
       fetchSlotsForDate()
-      // Update the current month when a date is selected
-      setCurrentMonth(date)
     }
   }
 
@@ -80,8 +80,13 @@ export default function AppointmentScheduler({
       setOutOfRangeMessage('This is too far in the future')
     } else {
       setOutOfRangeMessage(null)
-      // Don't automatically select a date when changing months
-      // Let the user explicitly select a date
+      const firstOfMonth = startOfMonth(month)
+      const today = startOfDay(new Date())
+      const dateToSelect = firstOfMonth < today ? today : firstOfMonth
+
+      setDate(dateToSelect)
+      setSelectedSlot(null)
+      fetchSlotsForDate()
     }
   }
 
@@ -100,7 +105,7 @@ export default function AppointmentScheduler({
         <Calendar
           mode="single"
           animate
-          dir="rtl"
+          dir='rtl'
           selected={selectedDate}
           onSelect={handleDateSelect}
           month={currentMonth}
@@ -171,3 +176,5 @@ export default function AppointmentScheduler({
     </div>
   )
 }
+
+```

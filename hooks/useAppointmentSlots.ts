@@ -1,7 +1,6 @@
-import { useState, useCallback, useEffect } from 'react'
-import { toZonedTime, format } from 'date-fns-tz'
-
-import { TimeSlot } from '@/types/home'
+import { useState, useEffect } from 'react'
+import { useQuery } from '@tanstack/react-query'
+import { format } from 'date-fns-tz'
 import { toast } from 'sonner'
 import {
   getAvailableDoctorSlots,
@@ -9,105 +8,70 @@ import {
 } from '@/lib/queries/server-home'
 
 export const useAppointmentSlots = (doctorId: string, userId?: string) => {
-  // --- State Management ---
-
-  // The currently selected date for viewing slots.
   const [date, setDate] = useState<Date | undefined>(new Date())
-  // List of available time slots for the selected `date`.
-  const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([])
-  // If the user has a pending appointment, this holds its start time.
   const [initialTimeSlot, setInitialTimeSlot] = useState<string | null>(null)
-  // Loading flag for UI feedback during data fetching.
-  const [isLoading, setIsLoading] = useState<boolean>(true)
 
-  // --- Core Logic ---
+  // Query for pending appointment (runs once on mount if userId exists)
+  const { data: pendingAppointment } = useQuery({
+    queryKey: ['pending-appointment', userId, doctorId],
+    queryFn: async () => {
+      if (!userId) return null
 
-  /**
-   * Fetches available time slots for a given date by calling the server action.
-   * @param {Date} dateToFetch - The date for which to fetch slots.
-   */
-  const fetchSlotsForDate = useCallback(
-    async (dateToFetch: Date) => {
-      setIsLoading(true)
-      try {
-        const dateString = format(dateToFetch, 'yyyy-MM-dd')
-        const response = await getAvailableDoctorSlots({
-          doctorId,
-          date: dateString,
-          currentUserId: userId,
-        })
+      const response = await getPendingAppointmentForDoctor({
+        userId,
+        doctorId,
+      })
 
-        if (response.success && response.data) {
-          setTimeSlots(response.data)
-        } else {
-          // Reset slots and show an error toast if the fetch fails
-          setTimeSlots([])
-          toast.error(response.message || 'Could not load appointment slots.')
-        }
-      } catch (error) {
-        console.error('Failed to fetch slots:', error)
-        setTimeSlots([])
-        toast.error('An unexpected error occurred. Please try again.')
-      } finally {
-        setIsLoading(false)
+      if (response.success && response.data?.appointment) {
+        return response.data.appointment
+      }
+      return null
+    },
+    enabled: !!userId,
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  })
+
+  // Query for available time slots
+  const {
+    data: timeSlots = [],
+    isLoading,
+    refetch: fetchSlotsForDate,
+  } = useQuery({
+    queryKey: [
+      'appointment-slots',
+      doctorId,
+      date ? format(date, 'yyyy-MM-dd') : null,
+      userId,
+    ],
+    queryFn: async () => {
+      if (!date) return []
+
+      const dateString = format(date, 'yyyy-MM-dd')
+      const response = await getAvailableDoctorSlots({
+        doctorId,
+        date: dateString,
+        currentUserId: userId,
+      })
+
+      if (response.success && response.data) {
+        return response.data
+      } else {
+        toast.error(response.message || 'Could not load appointment slots.')
+        return []
       }
     },
-    [doctorId, userId] // Dependencies for the callback
-  )
+    enabled: !!date && !!doctorId,
+    staleTime: 1000 * 60 * 2, // 2 minutes
+  })
 
-  /**
-   * This effect runs on initial component mount to determine the
-   * starting date and fetch the first set of slots.
-   */
+  // Effect to initialize date and slot from pending appointment
   useEffect(() => {
-    // A cleanup flag to prevent state updates on an unmounted component.
-    let isMounted = true
-
-    const initialize = async () => {
-      setIsLoading(true)
-
-      let effectiveDate = new Date() // Default to today
-      let pendingSlot: string | null = null
-
-      // 1. Check for a pending appointment if a user is logged in.
-      if (userId) {
-        try {
-          const response = await getPendingAppointmentForDoctor({
-            userId,
-            doctorId,
-          })
-
-          if (isMounted && response.success && response.data?.appointment) {
-            const { date: pendingDate, startTime } = response.data.appointment
-            // Override defaults if a pending appointment is found.
-            effectiveDate = new Date(pendingDate)
-            pendingSlot = startTime
-          }
-        } catch (error) {
-          // It's not critical if this fails; we can proceed with the default date.
-          console.warn('Could not check for pending appointments:', error)
-        }
-      }
-
-      // If the component is still mounted after async operations:
-      if (isMounted) {
-        // 2. Set the determined date and initial time slot in state.
-        setDate(effectiveDate)
-        setInitialTimeSlot(pendingSlot)
-        // 3. Fetch the slots for the determined effective date.
-        await fetchSlotsForDate(effectiveDate)
-      }
+    if (pendingAppointment) {
+      const { date: pendingDate, startTime } = pendingAppointment
+      setDate(new Date(pendingDate))
+      setInitialTimeSlot(startTime)
     }
-
-    initialize()
-
-    // 4. Cleanup function to run when the component unmounts.
-    return () => {
-      isMounted = false
-    }
-  }, [doctorId, userId, fetchSlotsForDate])
-
-  // --- Return Values ---
+  }, [pendingAppointment])
 
   return {
     date,
@@ -115,6 +79,6 @@ export const useAppointmentSlots = (doctorId: string, userId?: string) => {
     timeSlots,
     initialTimeSlot,
     isLoading,
-    fetchSlotsForDate, // Expose for manual refetching
+    fetchSlotsForDate,
   }
 }
