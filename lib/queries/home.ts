@@ -96,36 +96,6 @@ export async function getUserByEmail(
   }
 }
 
-export async function updateUserProfile(
-  id: string,
-  data: Partial<UserProfile>
-): Promise<ApiResponse<UserProfile>> {
-  try {
-    const updatedUser = await prisma.user.update({
-      where: { id },
-      data,
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true,
-        image: true,
-        dateOfBirth: true,
-        phoneNumber: true,
-        address: true,
-        isActive: true,
-        createdAt: true,
-        updatedAt: true,
-      },
-    })
-
-    return { success: true, data: updatedUser as UserProfile }
-  } catch (error) {
-    console.error('Error updating user profile:', error)
-    return { success: false, error: 'Failed to update user profile' }
-  }
-}
-
 // Doctor related queries
 export async function getDoctorProfile(
   userId: string
@@ -1518,7 +1488,6 @@ interface UserAppointmentsData {
   currentPage: number
 }
 
-//"PAYMENT_PENDING" | "BOOKING_CONFIRMED" | "COMPLETED" | "CANCELLED" | "NO_SHOW" | "CASH" |
 const mapAppointmentStatus = (
   status: AppointmentStatus
 ): Appointment['status'] | null => {
@@ -1531,8 +1500,8 @@ const mapAppointmentStatus = (
       return 'CANCELLED'
     case AppointmentStatus.NO_SHOW:
       return 'NO_SHOW'
-    case AppointmentStatus.PAYMENT_PENDING:
-      return 'PAYMENT_PENDING'
+    case AppointmentStatus.CASH:
+      return 'CASH'
     default:
       // Return null for statuses we don't want to display, like PAYMENT_PENDING
       return null
@@ -1557,7 +1526,6 @@ export async function getUserAppointments(params?: {
 
     // 2. Set up pagination parameters
     const page = params?.page || 1
-    // const limit = params?.limit || PAGE_SIZE
     const limit = params?.limit || 10
     const skip = (page - 1) * limit
 
@@ -1630,7 +1598,7 @@ export async function getUserAppointments(params?: {
         const zonedTime = toZonedTime(appt.appointmentStartUTC, timeZone)
 
         return {
-          id: appt.appointmentId,
+          appointmentId: appt.appointmentId,
           doctorName: appt.doctor.name,
           doctorId: appt.doctorId,
           specialty: appt.doctor.doctorProfile?.specialty ?? 'General',

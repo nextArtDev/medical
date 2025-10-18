@@ -1,9 +1,11 @@
+'use server'
 import { revalidatePath } from 'next/cache'
 import prisma from '../prisma'
 import { AppointmentStatus } from '../generated/prisma'
 import { FieldErrors } from 'react-hook-form'
 import { currentUser } from '../auth'
 import { fullReviewDataSchema } from '../schemas'
+import { ApiResponse, UserProfile } from '@/types/home'
 
 export interface ServerActionResponse<T = any> {
   success: boolean
@@ -191,5 +193,43 @@ export async function submitPatientReview(clientData: {
       error: errorMessage,
       errorType: 'SERVER_ERROR',
     }
+  }
+}
+
+export async function updateUserProfile(
+  data: Partial<UserProfile>
+): Promise<ApiResponse<UserProfile>> {
+  try {
+    const user = await currentUser()
+    if (!user?.id) {
+      return {
+        success: false,
+        message: 'User not authenticated',
+        error: 'Unauthorized. You must be logged in to update your profile.',
+        errorType: 'authentication',
+      }
+    }
+    const updatedUser = await prisma.user.update({
+      where: { id: user.id },
+      data,
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        image: true,
+        // dateOfBirth: true,
+        phoneNumber: true,
+        address: true,
+        isActive: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    })
+
+    return { success: true, data: updatedUser as UserProfile }
+  } catch (error) {
+    console.error('Error updating user profile:', error)
+    return { success: false, error: 'Failed to update user profile' }
   }
 }

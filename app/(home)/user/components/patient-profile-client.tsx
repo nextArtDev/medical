@@ -8,6 +8,9 @@ import { ReviewFormValues } from '@/lib/schemas'
 import ProfileHeader from './profile-header'
 import PersonalInformation from './personal-information'
 import AppointmentsSection from './appointments-sections'
+import EditProfileModal from './edit-patient-profile-modal'
+import CancellationDialogs from './cancellation-dialogs'
+import ReviewDialog from './review-dialog'
 
 // import { toast } from 'react-hot-toast'
 // import { PatientProfile, Appointment } from '@/types'
@@ -88,7 +91,7 @@ export default function PatientProfileClient({
     if (!appointToCancel) {
       return
     }
-    const idToCancel = appointToCancel.id
+    const idToCancel = appointToCancel.appointmentId
     setIsConfirmCancelCashDialogOpen(false)
     startTransition(async () => {
       const result = await cancelCashAppointment(idToCancel)
@@ -109,7 +112,7 @@ export default function PatientProfileClient({
     }
     startTransition(async () => {
       const result = await submitPatientReview({
-        appointmentId: selectedAppointmentForReview.id,
+        appointmentId: selectedAppointmentForReview.appointmentId,
         doctorId: selectedAppointmentForReview.doctorId,
         rating: formData.rating,
         reviewText: formData.reviewText,
@@ -152,7 +155,7 @@ export default function PatientProfileClient({
       />
 
       {/* Models*/}
-      {/* <EditProfileModal
+      <EditProfileModal
         isOpen={isEditProfileModalOpen}
         onClose={() => setEditProfileModalOpen(false)}
         patientData={patientData}
@@ -173,7 +176,7 @@ export default function PatientProfileClient({
           onSubmit={handleReviewSubmit}
           isSubmitting={isPending}
         />
-      )} */}
+      )}
     </div>
   )
 }

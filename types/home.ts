@@ -14,7 +14,7 @@ export interface UserProfile {
   email: string
   role: 'user' | 'admin' | 'doctor'
   image: string | null // Changed from string | undefined to string | null
-  dateOfBirth: Date | null // Changed from Date | undefined to Date | null
+  dateOfBirth: string | Date | null // Changed from Date | undefined to Date | null
   phoneNumber: string | null // Changed from string | undefined to string | null
   address: string | null // Changed from string | undefined to string | null
   isActive: boolean
