@@ -274,3 +274,13 @@ export interface DoctorReviewsPaginatedData {
   totalPages: number
   currentPage: number
 }
+
+export interface PatientProfile {
+  id: string
+  name: string
+  email: string
+  phoneNumber?: string
+  address?: string
+  dateOfBirth?: string
+  image?: string
+}

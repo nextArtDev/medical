@@ -23,10 +23,13 @@ import {
   PaginatedResult,
   DoctorReviewsPaginatedData,
   DoctorReview,
+  PatientProfile,
 } from '@/types/home'
 import prisma from '../prisma'
 import { format, toZonedTime } from 'date-fns-tz'
 import { getAppTimeZone } from '../utils'
+import { currentUser } from '../auth'
+import { AppointmentStatus } from '../generated/prisma'
 
 // User related queries
 export async function getUserById(
@@ -1443,5 +1446,222 @@ export async function getAdminDashboard(): Promise<
   } catch (error) {
     console.error('Error fetching admin dashboard:', error)
     return { success: false, error: 'Failed to fetch admin dashboard' }
+  }
+}
+
+export async function getUserDetails(): Promise<ApiResponse<PatientProfile>> {
+  try {
+    // 1. Get the current user session
+    const session = await currentUser()
+
+    if (!session?.id) {
+      return {
+        success: false,
+        message: 'User not authenticated',
+        error: 'Unauthorized: No user session found.',
+        errorType: 'AUTHENTICATION',
+      }
+    }
+
+    const userId = session.id
+
+    // 2. Fetch the user from the database
+    const user = await prisma.user.findUnique({
+      where: {
+        id: userId,
+      },
+    })
+
+    if (!user) {
+      return {
+        success: false,
+        message: 'User Profile not found',
+        error: `User not found.: ${session.id}`,
+        errorType: 'notFound',
+      }
+    }
+
+    // 3. Map the database user model to the PatientProfile type
+    const patientProfile: PatientProfile = {
+      id: user.id,
+      name: user.name || '',
+      email: user.email,
+      phoneNumber: user.phoneNumber ?? undefined,
+      address: user.address ?? undefined,
+      // Convert DateTime to ISO string, or return undefined if null
+      // dateOfBirth: user.dateofbirth?.toISOString().split('T')[0] ?? undefined,
+      image: user.image ?? undefined,
+    }
+
+    // 4. Return a successful response with the user data
+    return {
+      success: true,
+      message: 'User details fetched successfully.',
+      data: patientProfile,
+    }
+  } catch (error) {
+    // 5. Handle unexpected errors
+    console.error('Error in getUserDetails server action:', error)
+    return {
+      success: false,
+      message: 'Failed to load profile due to erver error',
+      error: error instanceof Error ? error.message : 'unkown error',
+      errorType: 'SERVER_ERROR',
+    }
+  }
+}
+
+interface UserAppointmentsData {
+  appointments: Appointment[]
+  totalAppointments: number
+  totalPages: number
+  currentPage: number
+}
+
+//"PAYMENT_PENDING" | "BOOKING_CONFIRMED" | "COMPLETED" | "CANCELLED" | "NO_SHOW" | "CASH" |
+const mapAppointmentStatus = (
+  status: AppointmentStatus
+): Appointment['status'] | null => {
+  switch (status) {
+    case AppointmentStatus.BOOKING_CONFIRMED:
+      return 'BOOKING_CONFIRMED'
+    case AppointmentStatus.COMPLETED:
+      return 'COMPLETED'
+    case AppointmentStatus.CANCELLED:
+      return 'CANCELLED'
+    case AppointmentStatus.NO_SHOW:
+      return 'NO_SHOW'
+    case AppointmentStatus.PAYMENT_PENDING:
+      return 'PAYMENT_PENDING'
+    default:
+      // Return null for statuses we don't want to display, like PAYMENT_PENDING
+      return null
+  }
+}
+export async function getUserAppointments(params?: {
+  page?: number
+  limit?: number
+}): Promise<ApiResponse<UserAppointmentsData>> {
+  try {
+    // 1. Authenticate the user
+    const session = await currentUser()
+    if (!session?.id) {
+      return {
+        success: false,
+        message: 'User not authenticated',
+        error: 'Unauthorized: No user session found.',
+        errorType: 'AUTHENTICATION',
+      }
+    }
+    const userId = session.id
+
+    // 2. Set up pagination parameters
+    const page = params?.page || 1
+    // const limit = params?.limit || PAGE_SIZE
+    const limit = params?.limit || 10
+    const skip = (page - 1) * limit
+
+    // 3. Define the common where clause to exclude pending payments
+    const whereClause = {
+      userId: userId,
+      status: {
+        not: AppointmentStatus.PAYMENT_PENDING,
+      },
+    }
+
+    // 4. Get the total count of appointments for the user
+    const totalAppointments = await prisma.appointment.count({
+      where: whereClause,
+    })
+
+    if (totalAppointments === 0) {
+      return {
+        success: true,
+        data: {
+          appointments: [],
+          totalAppointments: 0,
+          totalPages: 0,
+          currentPage: 1,
+        },
+      }
+    }
+
+    // 5. Fetch the paginated appointments from the database
+    const appointmentsFromDb = await prisma.appointment.findMany({
+      where: whereClause,
+      include: {
+        doctor: {
+          select: {
+            name: true,
+            id: true,
+            doctorProfile: {
+              select: {
+                specialty: true,
+              },
+            },
+          },
+        },
+        testimonial: {
+          select: {
+            testimonialId: true,
+          },
+        },
+      },
+      orderBy: {
+        appointmentStartUTC: 'desc', // Show most recent first
+      },
+      skip: skip,
+      take: limit,
+    })
+
+    // 6. Get the application timezone
+    const timeZone = getAppTimeZone()
+
+    // 7. Map database results to the required 'Appointment' interface
+    const formattedAppointments: Partial<Appointment>[] =
+      appointmentsFromDb.map((appt) => {
+        const mappedStatus = mapAppointmentStatus(appt.status)
+        if (!mappedStatus) {
+          // This should ideally not happen due to the where clause, but it's a good safeguard.
+          throw new Error(`Unhandled appointment status: ${appt.status}`)
+        }
+
+        // Convert UTC date to the application's timezone
+        const zonedTime = toZonedTime(appt.appointmentStartUTC, timeZone)
+
+        return {
+          id: appt.appointmentId,
+          doctorName: appt.doctor.name,
+          doctorId: appt.doctorId,
+          specialty: appt.doctor.doctorProfile?.specialty ?? 'General',
+          date: format(zonedTime, 'MMMM d, yyyy', { timeZone }),
+          time: format(zonedTime, 'hh:mm a', { timeZone }),
+          status: mappedStatus,
+          reasonForVisit: appt.reasonForVisit ?? undefined,
+          isReviewed: !!appt.testimonial, // Check if a testimonial exists
+        }
+      })
+
+    // 8. Calculate total pages and return the successful response
+    const totalPages = Math.ceil(totalAppointments / limit)
+
+    return {
+      success: true,
+      data: {
+        appointments: formattedAppointments,
+        totalAppointments,
+        totalPages,
+        currentPage: page,
+      },
+    }
+  } catch (error) {
+    console.error('Error in getUserAppointments server action:', error)
+    return {
+      success: false,
+      message:
+        'Failed to fetch appointments due to a server error. Pls try again later',
+      error: error instanceof Error ? error.message : 'unkown databse error',
+      errorType: 'SERVER_ERROR',
+    }
   }
 }
