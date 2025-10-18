@@ -9,7 +9,8 @@ import {
 import prisma from '../prisma'
 import { addMinutes, format, isSameDay, parse } from 'date-fns'
 import { AppointmentStatus, LeaveType } from '../generated/prisma'
-import { toZonedTime } from 'date-fns-tz'
+import { fromZonedTime, toZonedTime } from 'date-fns-tz'
+import { getAppTimeZone } from '../utils'
 
 export async function getDoctorReviewsPaginated(
   doctorId: string,
@@ -125,7 +126,14 @@ export async function getAvailableDoctorSlots({
   try {
     // --- 1. SETUP & PREREQUISITES ---
 
+    const appTimeZone = getAppTimeZone()
+
+    // const formattedDate = format(new Date(), 'yyyy-MM-dd HH:mm:ss', {
+    //   appTimeZone,
+    // })
     const nowUTC = new Date() // Current moment in time, the date object's internal value is UTC based
+    // console.log(formattedDate)
+    // console.log(fromZonedTime(new Date(), appTimeZone))
 
     const doctor = await prisma.user.findUnique({
       where: { id: doctorId },
@@ -158,8 +166,8 @@ export async function getAvailableDoctorSlots({
     // Convert the day's start and end times from app timezone to UTC.
     // const dayStartTimeUTC = fromZonedTime(`${date}T${startTime}`, appTimeZone)
     // const dayEndTimeUTC = fromZonedTime(`${date}T${endTime}`, appTimeZone)
-    const dayStartTimeUTC = new Date(`${date}T${startTime}`)
-    const dayEndTimeUTC = new Date(`${date}T${endTime}`)
+    const dayStartTimeUTC = fromZonedTime(`${date}T${startTime}`, appTimeZone)
+    const dayEndTimeUTC = fromZonedTime(`${date}T${endTime}`, appTimeZone)
 
     let currentSlotStartUTC = dayStartTimeUTC
 
@@ -179,8 +187,11 @@ export async function getAvailableDoctorSlots({
         startTimeUTC: currentSlotStartUTC,
         endTimeUTC: currentSlotEndUTC,
         // Format display times in the application's local timezone.
-        startTime: format(currentSlotStartUTC, 'HH:mm'),
-        endTime: format(currentSlotEndUTC, 'HH:mm'),
+        startTime: format(
+          toZonedTime(currentSlotStartUTC, appTimeZone),
+          'HH:mm'
+        ),
+        endTime: format(toZonedTime(currentSlotEndUTC, appTimeZone), 'HH:mm'),
       })
 
       currentSlotStartUTC = currentSlotEndUTC
@@ -207,7 +218,7 @@ export async function getAvailableDoctorSlots({
       }
 
       // 1:00 PM in the app's timezone, converted to UTC.
-      const afternoonStartUTC = new Date(`${date}T13:00:00`)
+      const afternoonStartUTC = fromZonedTime(`${date}T13:00:00`, appTimeZone)
 
       if (doctorLeave.leaveType === LeaveType.MORNING) {
         availableSlots = availableSlots.filter(
@@ -221,8 +232,8 @@ export async function getAvailableDoctorSlots({
     }
 
     // B. Filter based on Existing Appointments
-    const dayStartInAppTz = `${date}T00:00:00`
-    const dayEndInAppTz = `${date}T23:59:59`
+    const dayStartInAppTz = fromZonedTime(`${date}T00:00:00`, appTimeZone)
+    const dayEndInAppTz = fromZonedTime(`${date}T23:59:59`, appTimeZone)
 
     const appointmentsOnDate = await prisma.appointment.findMany({
       where: {
@@ -276,7 +287,10 @@ export async function getAvailableDoctorSlots({
 
     // C. Filter Past Slots for Today
     const requestedDateParsed = parse(date, 'yyyy-MM-dd', new Date())
-    const isToday = isSameDay(nowUTC, requestedDateParsed)
+    const isToday = isSameDay(
+      toZonedTime(nowUTC, appTimeZone),
+      requestedDateParsed
+    )
 
     if (isToday) {
       availableSlots = availableSlots.filter(

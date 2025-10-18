@@ -28,7 +28,17 @@ export function getIconComponent(iconName: string): LucideIcon {
 
 export function getAppTimeZone(): string {
   const defaultTimeZone = 'Asia/Tehran'
-  return process.env.APP_TIMEZONE || defaultTimeZone
+  const timeZone = process.env.APP_TIMEZONE || defaultTimeZone
+  // Validate that the time zone is supported
+  try {
+    Intl.DateTimeFormat(undefined, { timeZone })
+    return timeZone
+  } catch (e) {
+    console.error(
+      `Invalid time zone: ${timeZone}, falling back to ${defaultTimeZone}`
+    )
+    return defaultTimeZone
+  }
 }
 
 export const redirectToErrorPage = (

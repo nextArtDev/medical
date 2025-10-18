@@ -7,6 +7,7 @@ import { startOfMonth, addMonths, startOfDay, isAfter } from 'date-fns-jalali'
 import { Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { TimeSlot } from '@/types/home'
+import { Skeleton } from '@/components/ui/skeleton'
 
 interface AppointmentSchedulerProps {
   doctorId: string
@@ -107,7 +108,7 @@ export default function AppointmentScheduler({
           onMonthChange={handleMonthChange}
           disabled={(date) =>
             date < new Date(new Date().setDate(new Date().getDate() - 1)) ||
-            date.getDay() === 0 ||
+            date.getDay() === 5 ||
             date > toDate
           }
           className="rounded-md border border-border"
@@ -121,7 +122,20 @@ export default function AppointmentScheduler({
         </div>
         {isLoading ? (
           <div className="flex justify-center py-8">
-            <Loader2 className="animate-spin h-8 w-8 text-primary" />
+            {/* <Loader2 className="animate-spin h-8 w-8 text-primary" /> */}
+            <div className="grid grid-cols-2 gap-3">
+              {Array.from({ length: 16 }).map((_, index) => (
+                <div
+                  key={index}
+                  className={cn(
+                    'w-full  rounded-md',
+                    'flex items-center justify-center'
+                  )}
+                >
+                  <Skeleton className="w-24 h-8 bg-gray-300 dark:bg-gray-700 rounded-md" />
+                </div>
+              ))}
+            </div>
           </div>
         ) : outOfRangeMessage ? (
           <div className="text-center text-grey-500 rounded-md p-4 bg-gray-50">
