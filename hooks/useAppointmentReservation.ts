@@ -1,12 +1,17 @@
 import { useTransition } from 'react'
 
 import { useRouter } from 'next/navigation'
+
+import { toast } from 'sonner'
 import {
+  createGuestAppointment,
+  createOrUpdateAppointmentReservation,
   ServerActionResponse,
+} from '@/lib/actions'
+import {
   GuestAppointmentSuccessData,
   ReservationSuccessData,
-} from '@/types'
-import { toast } from 'sonner'
+} from '@/types/home'
 
 interface HookProps {
   userId?: string

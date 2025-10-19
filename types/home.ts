@@ -284,3 +284,39 @@ export interface PatientProfile {
   dateOfBirth?: string
   image?: string
 }
+
+export interface AppointmentReservationParams {
+  doctorId: string
+  userId: string
+  date: string
+  startTime: string
+  endTime: string
+}
+
+export interface ReservationSuccessData {
+  appointmentId: string
+}
+
+export interface GuestAppointmentParams {
+  doctorId: string
+  date: string
+  startTime: string
+  endTime: string
+}
+
+export interface GuestAppointmentSuccessData {
+  appointmentId: string
+  guestIdentifier: string
+}
+
+export interface ReservationSuccessData {
+  appointmentId: string
+}
+
+export interface AppointmentReservationParams {
+  doctorId: string
+  userId: string
+  date: string
+  startTime: string
+  endTime: string
+}

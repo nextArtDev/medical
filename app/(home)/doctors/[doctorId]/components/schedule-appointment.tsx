@@ -3,11 +3,18 @@ import { Calendar } from '@/components/ui/calendar'
 import { Button } from '@/components/ui/button'
 import { useAppointmentSlots } from '@/hooks/useAppointmentSlots'
 import { useState, useEffect } from 'react'
-import { startOfMonth, addMonths, startOfDay, isAfter } from 'date-fns-jalali'
+import {
+  startOfMonth,
+  addMonths,
+  startOfDay,
+  isAfter,
+  format,
+} from 'date-fns-jalali'
 import { Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { TimeSlot } from '@/types/home'
 import { Skeleton } from '@/components/ui/skeleton'
+import { useAppointmentReservation } from '@/hooks/useAppointmentReservation'
 
 interface AppointmentSchedulerProps {
   doctorId: string
@@ -28,6 +35,14 @@ export default function AppointmentScheduler({
     isLoading,
     fetchSlotsForDate,
   } = useAppointmentSlots(doctorId, userId)
+
+  const { mutate: reserveApointment, isPending } = useAppointmentReservation({
+    userId,
+    onConflict: () => {
+      setSelectedSlot(null)
+      if (selectedDate) fetchSlotsForDate(selectedDate)
+    },
+  })
 
   const [selectedSlot, setSelectedSlot] = useState<TimeSlot | null>(null)
   const [currentMonth, setCurrentMonth] = useState<Date>(new Date())
@@ -59,6 +74,13 @@ export default function AppointmentScheduler({
       return
     }
     // Add your reservation logic here
+
+    reserveApointment({
+      doctorId,
+      date: format(selectedDate, 'yyyy-MM-dd'), // Format date to YYYY-MM-DD
+      startTime: selectedSlot.startTime,
+      endTime: selectedSlot.endTime,
+    })
   }
 
   const handleDateSelect = (date: Date | undefined) => {
