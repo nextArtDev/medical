@@ -4,10 +4,11 @@ import prisma from '../prisma'
 import { AppointmentStatus, Prisma } from '../generated/prisma'
 import { FieldErrors } from 'react-hook-form'
 import { currentUser } from '../auth'
-import { fullReviewDataSchema } from '../schemas'
+import { fullReviewDataSchema, PatientDetailsFormSchema } from '../schemas'
 import {
   ApiResponse,
   AppointmentReservationParams,
+  AppointmentSubmissionData,
   GuestAppointmentParams,
   GuestAppointmentSuccessData,
   ReservationSuccessData,
@@ -15,7 +16,7 @@ import {
 } from '@/types/home'
 import { getAppTimeZone } from '../utils'
 import { fromZonedTime } from 'date-fns-tz'
-import { addMinutes } from 'date-fns-jalali'
+import { addMinutes, isValid, parse } from 'date-fns-jalali'
 import { v4 as uuidv4 } from 'uuid'
 
 export interface ServerActionResponse<T = any> {
@@ -24,7 +25,7 @@ export interface ServerActionResponse<T = any> {
   data?: T
   error?: string
   errorType?: string
-  fieldErrors?: FieldErrors
+  fieldErrors?: Record<string, string[] | undefined>
 }
 export async function cancelCashAppointment(
   appointmentId: string
@@ -602,6 +603,183 @@ export async function updateGuestAppointmentWithUser(
       errorType: 'SERVER_ERROR',
       error: error instanceof Error ? error.message : 'An unkown error occured',
       message: 'An unexpected error occurred while updating the appointment.',
+    }
+  }
+}
+
+interface AppointmentData {
+  appointmentId?: string
+}
+
+export async function processAppointmentBooking(
+  data: AppointmentSubmissionData
+): Promise<ServerActionResponse<AppointmentData>> {
+  // 1. Check for authenticated user
+  const session = await currentUser()
+  if (!session?.id) {
+    return {
+      success: false,
+      error: 'Authentication required. Please sign in to book an appointment.',
+      errorType: 'AUTH_ERROR',
+    }
+  }
+  const userId = session.id
+
+  // 2. Validate form data
+  const validationResult = PatientDetailsFormSchema.safeParse(data)
+  if (!validationResult.success) {
+    return {
+      success: false,
+      message: 'Please correct the errors below.',
+      fieldErrors: validationResult.error.flatten().fieldErrors,
+      errorType: 'VALIDATION_ERROR',
+    }
+  }
+  const validatedData = validationResult.data
+
+  try {
+    const appTimeZone = getAppTimeZone() // e.g., 'Asia/Kolkata'
+
+    // 3. Convert local time slot to UTC Dates for database storage
+    // Assumes `data.date` is in a format like 'YYYY-MM-DD'
+    const appointmentStartUTC = fromZonedTime(
+      `${data.date} ${data.timeSlot}`,
+      appTimeZone
+    )
+    const appointmentEndUTC = fromZonedTime(
+      `${data.date} ${data.endTime}`,
+      appTimeZone
+    )
+
+    // Parse patient's date of birth if provided
+    let patientDob: Date | null = null
+    if (
+      // validatedData.patientType === "SOMEONE_ELSE" &&
+      // validatedData.dateOfBirth
+      data.patientdateofbirth
+    ) {
+      const parsedDob = parse(
+        data.patientdateofbirth,
+        // "dd/MM/yyyy",
+        'yyyy-MM-dd',
+        new Date()
+      )
+      if (isValid(parsedDob)) {
+        patientDob = parsedDob
+      }
+    }
+
+    const { appointmentId, doctorId } = data
+    let finalAppointmentId: string | undefined = appointmentId
+
+    // 4. Find the original appointment reservation
+    const existingAppointment = appointmentId
+      ? await prisma.appointment.findFirst({
+          where: {
+            appointmentId: appointmentId,
+            userId: userId, // Ensure user can only access their own appointments
+          },
+        })
+      : null
+
+    const isReservationValid =
+      existingAppointment &&
+      existingAppointment.reservationExpiresAt &&
+      existingAppointment.reservationExpiresAt > new Date()
+
+    // 5. Decide whether to UPDATE or CREATE
+    if (isReservationValid && existingAppointment) {
+      // --- Scenario 1: Reservation is valid, UPDATE the appointment ---
+      await prisma.appointment.update({
+        where: { appointmentId: existingAppointment.appointmentId },
+        data: {
+          patientType: validatedData.patientType,
+          patientName: validatedData.fullName,
+          patientRelation:
+            validatedData.patientType === 'SOMEONE_ELSE'
+              ? validatedData.relationship
+              : null,
+          phoneNumber: data.phone,
+          patientDateOfBirth: patientDob,
+          reasonForVisit: validatedData.reason,
+          additionalNotes: validatedData.notes,
+        },
+      })
+      finalAppointmentId = existingAppointment.appointmentId
+    } else {
+      // --- Scenario 2 & 3: Reservation expired or not found, try to CREATE a new one ---
+
+      // First, check if the desired slot has been taken by someone else
+      const isSlotAvailable = await checkSlotAvailability(
+        doctorId,
+        appointmentStartUTC,
+        appointmentEndUTC
+      )
+
+      if (!isSlotAvailable) {
+        return {
+          success: false,
+          message:
+            'Your appointment reservation for the selection slot has expired. Please select another slot',
+          error:
+            'This time slot is no longer available. Please select a different one.',
+          errorType: 'SLOT_UNAVAILABLE',
+        }
+      }
+
+      // Slot is available, so create a new appointment with a new reservation window
+      const settings = await prisma.appSettings.findUnique({
+        where: { id: 'global' },
+      })
+      const reservationDuration = settings?.slotReservationDuration ?? 10 // Fallback to 10 mins
+      const reservationExpiresAt = new Date(
+        Date.now() + reservationDuration * 60 * 1000
+      )
+
+      const newAppointment = await prisma.appointment.create({
+        data: {
+          doctorId: doctorId,
+          userId: userId,
+          appointmentStartUTC: appointmentStartUTC,
+          appointmentEndUTC: appointmentEndUTC,
+          status: 'PAYMENT_PENDING',
+          reservationExpiresAt: reservationExpiresAt,
+          patientType: validatedData.patientType,
+          patientName: validatedData.fullName,
+          patientRelation:
+            validatedData.patientType === 'SOMEONE_ELSE'
+              ? validatedData.relationship
+              : null,
+          phoneNumber: data.phone,
+          patientDateOfBirth: patientDob,
+          reasonForVisit: validatedData.reason,
+          additionalNotes: validatedData.notes,
+        },
+      })
+      finalAppointmentId = newAppointment.appointmentId
+    }
+
+    // 6. Revalidate the cache and return a success response
+    if (finalAppointmentId) {
+      revalidatePath(
+        `/appointments/patient-details?appointmentId=${finalAppointmentId}`
+      )
+    }
+
+    return {
+      success: true,
+      message: 'Appointment details saved successfully.',
+      data: {
+        appointmentId: finalAppointmentId,
+      },
+    }
+  } catch (error) {
+    console.error('Error in processAppointmentBooking:', error)
+    return {
+      success: false,
+      message: 'An unexpected server error occurred. Please try again later.',
+      error: error instanceof Error ? error.message : 'An unkown error occured',
+      errorType: 'SERVER_ERROR',
     }
   }
 }

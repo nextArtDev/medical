@@ -16,6 +16,7 @@ import prisma from '@/lib/prisma'
 import { getAppointmentData } from '@/lib/queries/home'
 import { updateGuestAppointmentWithUser } from '@/lib/actions'
 import { AppointmentData, PatientData } from '@/types/home'
+import PatientDetailsClient from './components/patient-details-client'
 
 interface PatientDetailsSearchParams {
   appointmentId: string
@@ -162,10 +163,10 @@ export default async function PatientDetails({
   }
 
   return (
-    // <PatientDetailsClient
-    //   initialAppointmentData={appointmentDataForClient}
-    //   initialPatientDetails={patientDetailsForClient}
-    // />
+    <PatientDetailsClient
+      initialAppointmentData={appointmentDataForClient}
+      initialPatientDetails={patientDetailsForClient}
+    />
   )
 }
 
