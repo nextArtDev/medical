@@ -1,3 +1,4 @@
+import { isValid, parse } from 'date-fns-jalali'
 import z from 'zod'
 
 export const reviewFormSchema = z.object({
@@ -84,3 +85,68 @@ export const patientProfileUpdateSchema = z.object({
       { message: 'You must be younger than 120 years old to register' }
     ),
 })
+
+export const validDateString = z
+  .string({ required_error: 'Date of birth is required.' })
+  .regex(/^\d{2}\/\d{2}\/\d{4}$/, 'Date must be in DD/MM/YYYY format.')
+  .refine(
+    (dateStr) => {
+      // Use date-fns to parse the string and check if it's a valid date
+      const parsedDate = parse(dateStr, 'dd/MM/yyyy', new Date())
+      return isValid(parsedDate)
+    },
+    {
+      message: 'Please enter a valid date.',
+    }
+  )
+
+export const phoneValidationSchema = z
+  .string()
+  .min(7, 'Phone number must be at least 7 digits.')
+  .max(20, 'Phone number cannot exceed 20 characters.')
+  .regex(/^[0-9+-]+$/, 'Phone number can only contain numbers, +, or -.')
+
+const baseSchema = z.object({
+  email: z.string().email('Please enter a valid email address.').readonly(),
+  reason: z.string().min(1, 'Reason for visit is required.'),
+  notes: z.string().optional(),
+  useAlternatePhone: z.boolean().optional(),
+  phone: z.string().optional(),
+})
+
+const myselfSchema = baseSchema.extend({
+  patientType: z.literal('MYSELF'),
+  fullName: z.string().min(1, 'Full name is required.'),
+  dateOfBirth: z.string().optional(), // Not required for "MYSELF"
+  relationship: z.string().optional(), // Not required for "MYSELF"
+})
+
+/**
+ * Schema for when the patient is someone other than the user.
+ */
+const someoneElseSchema = baseSchema.extend({
+  patientType: z.literal('SOMEONE_ELSE'),
+  fullName: z.string().min(1, 'Patient’s full name is required.'),
+  relationship: z.string().min(1, 'Relationship to patient is required.'),
+  dateOfBirth: validDateString, // Required and must be a valid date string
+})
+
+export const PatientDetailsFormSchema = z
+  .discriminatedUnion('patientType', [myselfSchema, someoneElseSchema])
+  .superRefine((data, ctx) => {
+    // If 'useAlternatePhone' is checked, the 'phone' field becomes required and must be valid.
+    if (data.useAlternatePhone) {
+      const phoneValidationResult = phoneValidationSchema.safeParse(data.phone)
+      if (!phoneValidationResult.success) {
+        // Manually add the validation issues from phoneValidationSchema to the 'phone' path
+        phoneValidationResult.error.issues.forEach((issue) => {
+          ctx.addIssue({
+            ...issue,
+            path: ['phone'], // Ensure the error is associated with the correct field
+          })
+        })
+      }
+    }
+  })
+
+export type PatientDetailsFormValues = z.infer<typeof PatientDetailsFormSchema>

@@ -1,3 +1,5 @@
+import { PatientDetailsFormValues } from '@/lib/schemas'
+
 // Base types for API responses
 export interface ApiResponse<T> {
   success: boolean
@@ -319,4 +321,45 @@ export interface AppointmentReservationParams {
   date: string
   startTime: string
   endTime: string
+}
+
+export interface AppointmentData {
+  appointmentId: string
+  doctorId: string
+  doctorName: string
+  doctorSpecilaity: string
+  doctorImage?: string | null
+  date: string
+  timeSlot: string
+  endTime: string
+  patientType?: 'MYSELF' | 'SOMEONE_ELSE'
+  patientName?: string
+  patientdateofbirth?: Date | null
+  phoneNumber?: string | null
+  reasonForVisit?: string | null
+  additionalNotes?: string | null
+  relationship?: string | null
+}
+
+export interface PatientData {
+  name: string
+  email: string
+  phoneNumber: string
+  dateOfBirth: string
+}
+
+export type AppointmentSubmissionData = PatientDetailsFormValues & {
+  appointmentId: string
+  doctorId: string
+  date: string
+  timeSlot: string
+  endTime: string
+  isForSelf: boolean
+  phone: string | null | undefined
+  patientdateofbirth?: string
+}
+
+export interface AppointmentDataWithBilling extends AppointmentData {
+  fee: number
+  patientEmail: string
 }

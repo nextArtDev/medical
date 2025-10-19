@@ -530,3 +530,78 @@ export async function createGuestAppointment({
     }
   }
 }
+
+export async function updateGuestAppointmentWithUser(
+  guestIdentifier: string
+): Promise<ServerActionResponse<{ appointmentId?: string }>> {
+  // 1. Authenticate the user
+  const session = await currentUser()
+  if (!session?.id) {
+    return {
+      success: false,
+      errorType: 'AUTHENTICATION_ERROR',
+      error: 'User is not authenticated.',
+      message: 'You must be logged in to claim an appointment.',
+    }
+  }
+  const userId = session.id
+
+  // 2. Validate input
+  if (!guestIdentifier) {
+    return {
+      success: false,
+      errorType: 'VALIDATION_ERROR',
+      error: 'Guest identifier is missing.',
+      message: 'We were not able to find your appointment. Please try again',
+    }
+  }
+
+  try {
+    // 3. Find the guest appointment that is not expired and not already claimed
+    const appointmentToClaim = await prisma.appointment.findFirst({
+      where: {
+        guestIdentifier: guestIdentifier,
+        userId: null, // Ensure it's a guest appointment that hasn't been claimed
+        reservationExpiresAt: {
+          gt: new Date(), // Check that the reservation slot has not expired
+        },
+      },
+    })
+
+    // 4. Handle if appointment is not found, expired, or already claimed
+    if (!appointmentToClaim) {
+      return {
+        success: false,
+        errorType: 'NOT_FOUND',
+        error: 'Appointment not found or expired.',
+      }
+    }
+
+    // 5. Update the appointment record with the user's ID
+    const updatedAppointment = await prisma.appointment.update({
+      where: {
+        appointmentId: appointmentToClaim.appointmentId,
+      },
+      data: {
+        userId: userId,
+        // It's good practice to nullify the guest identifier after it's been used
+        guestIdentifier: null,
+      },
+    })
+
+    // 6. Return a success response
+    return {
+      success: true,
+      message: 'Appointment has been successfully linked to your account.',
+      data: { appointmentId: updatedAppointment.appointmentId },
+    }
+  } catch (error) {
+    console.error('Error updating guest appointment with user:', error)
+    return {
+      success: false,
+      errorType: 'SERVER_ERROR',
+      error: error instanceof Error ? error.message : 'An unkown error occured',
+      message: 'An unexpected error occurred while updating the appointment.',
+    }
+  }
+}

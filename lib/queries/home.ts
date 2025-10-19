@@ -29,7 +29,7 @@ import prisma from '../prisma'
 import { format, toZonedTime } from 'date-fns-tz'
 import { getAppTimeZone } from '../utils'
 import { currentUser } from '../auth'
-import { AppointmentStatus } from '../generated/prisma'
+import { AppointmentStatus, Prisma } from '../generated/prisma'
 
 // User related queries
 export async function getUserById(
@@ -1630,6 +1630,105 @@ export async function getUserAppointments(params?: {
         'Failed to fetch appointments due to a server error. Pls try again later',
       error: error instanceof Error ? error.message : 'unkown databse error',
       errorType: 'SERVER_ERROR',
+    }
+  }
+}
+
+export type AppoitmentWithRelations = Prisma.AppointmentGetPayload<{
+  include: {
+    doctor: {
+      include: {
+        doctorProfile: true
+      }
+    }
+  }
+}>
+
+export async function getAppointmentData({
+  appointmentId,
+}: {
+  appointmentId: string
+}): Promise<ApiResponse<AppoitmentWithRelations>> {
+  // 1. Basic input validation
+  if (!appointmentId) {
+    return {
+      success: false,
+      message: 'Appointment identifier is missing',
+      error: 'Appointment ID is required.',
+      errorType: 'BAD_REQUEST',
+    }
+  }
+
+  try {
+    // 2. Fetch the appointment with its relations
+    const appointment = await prisma.appointment.findUnique({
+      where: {
+        appointmentId: appointmentId,
+      },
+      include: {
+        doctor: {
+          include: {
+            // Assuming 'doctorProfile' is the name of the relation on the User model
+            doctorProfile: true,
+          },
+        },
+      },
+    })
+
+    // 3. Handle case where appointment is not found
+    if (!appointment) {
+      return {
+        success: false,
+        error: 'Appointment not found.',
+        errorType: 'NOT_FOUND',
+        message: 'The requested appointment does not exist.',
+      }
+    }
+
+    // 4. Check if the appointment status is PAYMENT_PENDING
+    if (appointment.status !== 'PAYMENT_PENDING') {
+      return {
+        success: false,
+        error: 'Appointment status conflict.',
+        errorType: 'StatusConflict',
+        message: `This appointment cannot be processed as its status is '${appointment.status}'. Only appointments pending payment can be accessed.`,
+      }
+    }
+
+    // 5. Check if the reservation has expired
+    const now = new Date()
+    if (
+      appointment.reservationExpiresAt &&
+      appointment.reservationExpiresAt < now
+    ) {
+      // Optionally, you could also trigger the cleanup action here or just inform the user.
+      // For now, we just inform the user as requested.
+      return {
+        success: false,
+        error: 'Appointment reservation has expired.',
+        errorType: 'ReservationExpired',
+        message:
+          'Your reserved time slot has expired. Please select a new appointment time.',
+      }
+    }
+
+    // 6. Success case: Return the appointment data
+    return {
+      success: true,
+      message: 'Appointment data fetched successfully.',
+      data: appointment,
+    }
+  } catch (error) {
+    console.error('Error fetching appointment data:', error)
+    return {
+      success: false,
+      error:
+        error instanceof Error
+          ? error.message
+          : 'An unexpected server error occurred.',
+      errorType: 'SERVER_ERROR',
+      message:
+        'We could not retrieve the appointment details. Please try again later.',
     }
   }
 }
