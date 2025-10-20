@@ -7,6 +7,7 @@ export async function GET(request: NextRequest) {
   const Authority = searchParams.get('Authority')
   const Status = searchParams.get('Status')
   const orderId = searchParams.get('orderId')
+  const appointmentId = searchParams.get('appointmentId')
 
   try {
     // Validate required parameters
@@ -29,6 +30,7 @@ export async function GET(request: NextRequest) {
       `/order/${orderId}`,
       orderId,
       Authority,
+      appointmentId || '',
       Status
     )
 

@@ -85,14 +85,15 @@ const validatePaymentParameters = (
   return { isValid: true }
 }
 
-const findOrderByIdAndUser = async (orderId: string, userId: string) => {
+const findOrderByIdAndUser = async (orderId: string, appointmentId: string) => {
   return await prisma.order.findFirst({
     where: {
       id: orderId,
-      userId: userId,
+      appointmentId: appointmentId,
     },
     include: {
-      items: true,
+      //   items: true,
+      appointment: true,
       paymentDetails: true,
     },
   })
@@ -254,6 +255,7 @@ export async function zarinpalPaymentApproval(
   path: string,
   orderId: string,
   Authority: string,
+  appointmentId: string,
   Status: string
 ) {
   // Clean up expired locks first
@@ -293,11 +295,11 @@ export async function zarinpalPaymentApproval(
     const order = await prisma.order.findFirst({
       where: {
         id: orderId,
-        userId: user.id,
+        appointmentId,
       },
-      include: {
-        items: true,
-      },
+      //   include: {
+      //     items: true,
+      //   },
     })
 
     if (!order) {
@@ -318,7 +320,7 @@ export async function zarinpalPaymentApproval(
     const isValidAttempt = await validatePaymentAttempt(
       orderId,
       Authority,
-      order.total
+      order.amount
     )
     if (!isValidAttempt) {
       return {
@@ -329,7 +331,7 @@ export async function zarinpalPaymentApproval(
     }
 
     // CRITICAL: Validate order integrity
-    const isOrderValid = await validateOrderIntegrity(orderId, order.total)
+    const isOrderValid = await validateOrderIntegrity(orderId, order.amount)
     if (!isOrderValid) {
       return {
         errors: {
@@ -342,7 +344,7 @@ export async function zarinpalPaymentApproval(
       const zarinpal = ZarinPalCheckout.create(process.env.ZARINPAL_KEY!, true)
 
       const verification = (await zarinpal.PaymentVerification({
-        Amount: Number(order.total),
+        Amount: Number(order.amount),
         Authority,
       })) as { status: number; refId: number }
       // console.log({ verification })
@@ -367,7 +369,7 @@ export async function zarinpalPaymentApproval(
             id: verification.refId.toString(),
             status: 'OK',
             authority: Authority,
-            fee: order.total.toString(),
+            fee: order.amount.toString(),
           },
         })
 
@@ -414,71 +416,6 @@ export async function zarinpalPaymentApproval(
 }
 
 // Server action to deliver order (for admin use)
-export async function deliverOrder(orderId: string) {
-  try {
-    const user = await getCurrentUser()
-    if (!user) {
-      return {
-        success: false,
-        message: ERROR_MESSAGES.UNAUTHORIZED,
-      }
-    }
-
-    // Check admin authorization
-    if (user?.role !== 'admin') {
-      return {
-        success: false,
-        message: 'شما اجازه انجام این عمل را ندارید!',
-      }
-    }
-
-    const order = await prisma.order.findFirst({
-      where: { id: orderId },
-    })
-
-    if (!order) {
-      return {
-        success: false,
-        message: ERROR_MESSAGES.ORDER_NOT_FOUND,
-      }
-    }
-
-    if (order.paymentStatus !== 'Paid') {
-      return {
-        success: false,
-        message: 'سفارش هنوز پرداخت نشده است!',
-      }
-    }
-
-    if (order.orderStatus === 'Delivered') {
-      return {
-        success: false,
-        message: 'سفارش قبلاً تحویل داده شده است!',
-      }
-    }
-
-    await prisma.order.update({
-      where: { id: orderId },
-      data: {
-        orderStatus: 'Delivered',
-      },
-    })
-
-    revalidatePath(`/order/${orderId}`)
-
-    return {
-      success: true,
-      message: 'سفارش با موفقیت به عنوان تحویل شده علامت‌گذاری شد!',
-    }
-  } catch (error) {
-    console.error('Deliver order error:', error)
-    return {
-      success: false,
-      message:
-        error instanceof Error ? error.message : ERROR_MESSAGES.GENERIC_ERROR,
-    }
-  }
-}
 
 // Server action for COD orders
 export async function updateOrderToPaidCOD(orderId: string) {
@@ -628,21 +565,22 @@ async function validatePaymentAttempt(
 // CRITICAL: Validate order hasn't been tampered with
 async function validateOrderIntegrity(
   orderId: string,
+
   expectedAmount: number
 ): Promise<boolean> {
   const order = await prisma.order.findUnique({
     where: { id: orderId },
-    select: { total: true, userId: true, paymentStatus: true },
+    select: { amount: true, appointmentId: true, paymentStatus: true },
   })
 
   if (!order) return false
   if (order.paymentStatus === 'Paid') return false
 
   // Ensure amount matches exactly
-  if (Math.abs(order.total - expectedAmount) > 0.01) {
+  if (Math.abs(order.amount - expectedAmount) > 0.01) {
     console.error('Payment amount mismatch:', {
       orderId,
-      orderTotal: order.total,
+      orderTotal: order.amount,
       paymentAmount: expectedAmount,
     })
     return false
@@ -689,7 +627,13 @@ export async function updateOrderToPaidSecure({
     // CRITICAL: Use SELECT FOR UPDATE equivalent
     const order = await tx.order.findFirst({
       where: { id: orderId },
-      include: { items: true },
+      include: {
+        appointment: {
+          select: {
+            userId: true,
+          },
+        },
+      },
     })
 
     if (!order) {
@@ -701,41 +645,7 @@ export async function updateOrderToPaidSecure({
       throw new Error('Order already paid')
     }
 
-    // CRITICAL: Validate inventory before updating
-    for (const item of order.items) {
-      const currentVariant = await tx.productVariant.findUnique({
-        where: {
-          // : item.productSlug,
-          id: item.variantId,
-        },
-        select: { quantity: true },
-      })
-
-      if (!currentVariant || currentVariant.quantity < item.quantity) {
-        throw new Error(`Insufficient inventory for product ${item.variantId}`)
-      }
-    }
-
     // Update inventory
-    for (const item of order.items) {
-      await tx.productVariant.update({
-        where: {
-          //
-          id: item.variantId,
-          quantity: { gte: item.quantity },
-        },
-        data: {
-          quantity: { decrement: item.quantity },
-        },
-      })
-
-      await tx.product.update({
-        where: { slug: item.productSlug },
-        data: {
-          sales: { increment: item.quantity },
-        },
-      })
-    }
 
     // Mark order as paid
     const updatedOrder = await tx.order.update({
@@ -758,7 +668,8 @@ export async function updateOrderToPaidSecure({
         },
         create: {
           orderId,
-          userId: order.userId,
+
+          userId: order.appointment.userId as string,
           status: paymentResult.status,
           Authority: paymentResult.authority,
           amount: Number(paymentResult.fee),
