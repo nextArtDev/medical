@@ -985,20 +985,29 @@ export async function createTestimonial(
 }
 
 // Payment related queries
-export async function getOrderById(id: string): Promise<ApiResponse<Order>> {
+export async function getOrderById(orderId: string) {
   try {
-    const order = await prisma.order.findUnique({
-      where: { id },
+    const { unstable_noStore } = await import('next/cache')
+    unstable_noStore()
+    const data = await prisma.order.findFirst({
+      where: {
+        id: orderId,
+      },
+      include: {
+        paymentDetails: {
+          include: {
+            User: true,
+          },
+        },
+
+        // user: { select: { name: true, phoneNumber: true, role: true } },
+      },
     })
 
-    if (!order) {
-      return { success: false, error: 'Order not found' }
-    }
-
-    return { success: true, data: order as Order }
+    return data
   } catch (error) {
-    console.error('Error fetching order:', error)
-    return { success: false, error: 'Failed to fetch order' }
+    console.error(error)
+    // unstable_noStore not available, continue without it
   }
 }
 
@@ -1459,7 +1468,7 @@ export async function getUserDetails(): Promise<ApiResponse<PatientProfile>> {
       phoneNumber: user.phoneNumber ?? undefined,
       address: user.address ?? undefined,
       // Convert DateTime to ISO string, or return undefined if null
-      // dateOfBirth: user.dateofbirth?.toISOString().split('T')[0] ?? undefined,
+      dateOfBirth: user.dateOfBirth?.toISOString().split('T')[0] ?? undefined,
       image: user.image ?? undefined,
     }
 
