@@ -68,6 +68,7 @@
     "tailwind-merge": "^3.3.1",
     "uuid": "^13.0.0",
     "vaul": "^1.1.2",
+    "zarinpal-checkout": "^0.3.0",
     "zod": "^3.25.76"
   },
   "devDependencies": {
@@ -77,6 +78,7 @@
     "@types/node": "^20.19.21",
     "@types/react": "^19.2.2",
     "@types/react-dom": "^19.2.2",
+    "@types/zarinpal-checkout": "^0.2.5",
     "eslint": "^9.37.0",
     "eslint-config-next": "15.3.3",
     "tailwindcss": "^4.1.14",
