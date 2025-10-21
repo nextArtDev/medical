@@ -1014,8 +1014,8 @@ export async function getOrderById(orderId: string) {
 export async function createOrder(
   appointmentId: string,
   doctorId: string,
-  amount: number,
-  currency: string
+  amount: number
+  // currency: string
 ): Promise<ApiResponse<Order & { paymentDetails: PaymentDetails }>> {
   try {
     const order = await prisma.order.create({
@@ -1023,7 +1023,7 @@ export async function createOrder(
         appointmentId,
         doctorId,
         amount,
-        currency,
+        // currency,
       },
       include: {
         paymentDetails: true,

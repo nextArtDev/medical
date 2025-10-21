@@ -65,6 +65,7 @@ const OrderDetailsTable = ({ order }: OrderDetailsTableProps) => {
   const searchParams = useSearchParams()
   const router = useRouter()
   const pathname = usePathname()
+  // const orderId = searchParams?.get('orderId')
   // Show toast messages based on URL parameters
   useEffect(() => {
     const status = searchParams?.get('status')
@@ -95,14 +96,15 @@ const OrderDetailsTable = ({ order }: OrderDetailsTableProps) => {
     paymentStatus,
     paidAt: rawPaidAt,
     paymentDetails,
+    appointmentId,
   } = order
-
+  // console.log({ order })
   const isPaid = paymentStatus === 'Paid'
   const paidAt = parseDate(rawPaidAt)
   const transactionId = paymentDetails?.transactionId
   // Payment action state
   const [actionState, zarinpalPaymentAction, isPending] = useActionState(
-    zarinpalPayment.bind(null, `/appointments/order/${id}`, id),
+    zarinpalPayment.bind(null, `/appointments/${appointmentId}`, id),
     {
       errors: {},
       payment: {},

@@ -13,7 +13,10 @@ export async function GET(request: NextRequest) {
     // Validate required parameters
     if (!Authority || !Status || !orderId) {
       return NextResponse.redirect(
-        new URL(`/appointments/${orderId}?error=invalid_params`, request.url)
+        new URL(
+          `/appointments/${appointmentId}?orderId=${orderId}&error=invalid_params`,
+          request.url
+        )
       )
     }
 
@@ -27,7 +30,7 @@ export async function GET(request: NextRequest) {
 
     // Process payment approval
     const result = await zarinpalPaymentApproval(
-      `/appointments/${orderId}`,
+      `/appointments/${appointmentId}`,
       orderId,
       Authority,
       appointmentId || '',
@@ -38,29 +41,44 @@ export async function GET(request: NextRequest) {
     if (result?.errors?._form) {
       const errorMessage = encodeURIComponent(result.errors._form[0])
       return NextResponse.redirect(
-        new URL(`/appointments/${orderId}?error=${errorMessage}`, request.url)
+        new URL(
+          `/appointments/${appointmentId}?error=${errorMessage}`,
+          request.url
+        )
       )
     }
 
     if (result?.success) {
       if (result.alreadyPaid) {
         return NextResponse.redirect(
-          new URL(`/appointments/${orderId}?status=already_paid`, request.url)
+          new URL(
+            `/appointments/${appointmentId}?orderId=${orderId}&status=already_paid`,
+            request.url
+          )
         )
       }
       return NextResponse.redirect(
-        new URL(`/appointments/${orderId}?status=success`, request.url)
+        new URL(
+          `/appointments/${appointmentId}?orderId=${orderId}&status=success`,
+          request.url
+        )
       )
     }
 
     // Default case - redirect with generic error
     return NextResponse.redirect(
-      new URL(`/appointments/${orderId}?error=payment_failed`, request.url)
+      new URL(
+        `/appointments/${appointmentId}?orderId=${orderId}&error=payment_failed`,
+        request.url
+      )
     )
   } catch (error) {
     console.error('Payment callback error:', error)
     return NextResponse.redirect(
-      new URL(`/appointments/${orderId}?error=server_error`, request.url)
+      new URL(
+        `/appointments/${appointmentId}?orderId=${orderId}&error=server_error`,
+        request.url
+      )
     )
   }
 }

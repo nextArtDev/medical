@@ -41,15 +41,13 @@ const OrderDetailsPage = async ({
   const order = await createOrder(
     appointmentId,
     appointment.data?.doctorId,
-    50000,
-    'RIAL'
+    50000 // Fixed amount for appointment
   )
 
   if (!order.data || !order.success) notFound()
 
   return (
     <section>
-      <p>{appointment.data?.appointmentId}</p>
       <Suspense fallback={<OrderDetailsSkeleton />}>
         <OrderDetailsTableWrapper
           order={{

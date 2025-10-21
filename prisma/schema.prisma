@@ -317,7 +317,7 @@ model Order {
   appointmentId String    @db.Uuid
   doctorId      String
   amount        Float
-  currency      String
+  currency      String?
   paidAt        DateTime? @db.Timestamp(6)
   notes         String?
 

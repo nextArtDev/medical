@@ -85,11 +85,11 @@ const validatePaymentParameters = (
   return { isValid: true }
 }
 
-const findOrderByIdAndUser = async (orderId: string, appointmentId: string) => {
+const findOrderByIdAndUser = async (orderId: string, userId: string) => {
   return await prisma.order.findFirst({
     where: {
       id: orderId,
-      appointmentId: appointmentId,
+      // appointmentId: appointmentId,
     },
     include: {
       //   items: true,
@@ -100,7 +100,11 @@ const findOrderByIdAndUser = async (orderId: string, appointmentId: string) => {
 }
 
 // Helper function to create payment request
-async function createPaymentRequest(order: any, orderId: string) {
+async function createPaymentRequest(
+  order: any,
+  orderId: string,
+  appointmentId: string
+) {
   const zarinpal = createZarinpalInstance()
 
   const user = await getCurrentUser()
@@ -110,11 +114,11 @@ async function createPaymentRequest(order: any, orderId: string) {
   // Use the new API route for callback
   const callbackURL =
     process.env.NODE_ENV === 'production'
-      ? `${process.env.NEXT_PUBLIC_APP_URL}/api/payment/callback?orderId=${orderId}`
+      ? `${process.env.NEXT_PUBLIC_APP_URL}/api/payment/callback?orderId=${orderId}&appointmentId=${appointmentId}`
       : `http://localhost:3000/api/payment/callback?orderId=${orderId}`
 
   const payment = (await zarinpal.PaymentRequest({
-    Amount: Number(order.total),
+    Amount: Number(order.amount),
     CallbackURL: callbackURL,
     Description: `Payment for order ${orderId}`,
     Mobile: user.phoneNumber,
@@ -178,6 +182,7 @@ export async function zarinpalPayment(
 
     // Validate parameters
     const validation = validatePaymentParameters(orderId)
+
     if (!validation.isValid) {
       return {
         errors: {
@@ -212,7 +217,11 @@ export async function zarinpalPayment(
     // const callbackURL = `${process.env.PAYMENT_CALLBACK_URL}/order/${orderId}`
 
     // Create payment request
-    const payment = await createPaymentRequest(order, orderId)
+    const payment = await createPaymentRequest(
+      order,
+      orderId,
+      order.appointmentId
+    )
 
     if (!payment) {
       return {
@@ -689,7 +698,7 @@ export async function checkRateLimit(userId: string) {
     where: { userId, createdAt: { gte: oneHourAgo } },
   })
 
-  if (count >= 10) {
+  if (count >= 100) {
     throw new Error(
       'تعداد درخواست‌ها بیش از حد مجاز است، لطفا چند دقیقه بعد دوباره امتحان کنید.'
     )
