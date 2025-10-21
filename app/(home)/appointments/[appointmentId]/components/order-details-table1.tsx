@@ -67,6 +67,7 @@ const OrderDetailsTable = ({ order }: OrderDetailsTableProps) => {
   const pathname = usePathname()
   // const orderId = searchParams?.get('orderId')
   // Show toast messages based on URL parameters
+
   useEffect(() => {
     const status = searchParams?.get('status')
     const errorCode = searchParams?.get('error')

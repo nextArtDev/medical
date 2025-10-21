@@ -38,13 +38,14 @@ const OrderDetailsPage = async ({
   const appointment = await getAppointmentById(appointmentId)
   if (!appointment.data?.doctorId) notFound()
   const user = currentUser()
-  const order = await createOrder(
-    appointmentId,
-    appointment.data?.doctorId,
-    50000 // Fixed amount for appointment
-  )
-
-  if (!order.data || !order.success) notFound()
+  // const order = await createOrder(
+  //   appointmentId,
+  //   appointment.data?.doctorId,
+  //   50000 // Fixed amount for appointment
+  // )
+  // console.log(order)
+  // console.log(order.data?.paymentDetails)
+  // if (!order.data || !order.success) notFound()
 
   return (
     <section>

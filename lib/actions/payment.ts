@@ -66,11 +66,11 @@ const createZarinpalInstance = () => {
 }
 
 const validatePaymentParameters = (
-  orderId: string,
+  appointmentId: string,
   Authority?: string,
   Status?: string
 ) => {
-  if (!orderId) {
+  if (!appointmentId) {
     return { isValid: false, error: ERROR_MESSAGES.ORDER_NOT_FOUND }
   }
 
@@ -114,8 +114,8 @@ async function createPaymentRequest(
   // Use the new API route for callback
   const callbackURL =
     process.env.NODE_ENV === 'production'
-      ? `${process.env.NEXT_PUBLIC_APP_URL}/api/payment/callback?orderId=${orderId}&appointmentId=${appointmentId}`
-      : `http://localhost:3000/api/payment/callback?orderId=${orderId}`
+      ? `${process.env.NEXT_PUBLIC_APP_URL}/api/payment/callback?appointmentId=${appointmentId}&orderId={orderId}`
+      : `http://localhost:3000/api/payment/callback?appointmentId=${appointmentId}&orderId=${orderId}`
 
   const payment = (await zarinpal.PaymentRequest({
     Amount: Number(order.amount),
@@ -644,7 +644,7 @@ export async function updateOrderToPaidSecure({
         },
       },
     })
-
+    // console.log({ order })
     if (!order) {
       throw new Error('Order not found')
     }
@@ -664,7 +664,9 @@ export async function updateOrderToPaidSecure({
         paidAt: new Date(), // Set the actual payment date
       },
     })
-
+    // 2e7eac33-106a-4217-b531-a1cb405099be
+    //7885d1f9-fa9b-4b5c-8588-c4b7326719fe
+    console.log({ updatedOrder })
     // Update payment details with transaction ID
     if (paymentResult) {
       await tx.paymentDetails.upsert({

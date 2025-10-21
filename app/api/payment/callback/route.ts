@@ -8,13 +8,12 @@ export async function GET(request: NextRequest) {
   const Status = searchParams.get('Status')
   const orderId = searchParams.get('orderId')
   const appointmentId = searchParams.get('appointmentId')
-
   try {
     // Validate required parameters
-    if (!Authority || !Status || !orderId) {
+    if (!Authority || !Status || !appointmentId || !orderId) {
       return NextResponse.redirect(
         new URL(
-          `/appointments/${appointmentId}?orderId=${orderId}&error=invalid_params`,
+          `/appointments/${appointmentId}?error=invalid_params`,
           request.url
         )
       )
@@ -52,33 +51,27 @@ export async function GET(request: NextRequest) {
       if (result.alreadyPaid) {
         return NextResponse.redirect(
           new URL(
-            `/appointments/${appointmentId}?orderId=${orderId}&status=already_paid`,
+            `/appointments/${appointmentId}?status=already_paid`,
             request.url
           )
         )
       }
       return NextResponse.redirect(
-        new URL(
-          `/appointments/${appointmentId}?orderId=${orderId}&status=success`,
-          request.url
-        )
+        new URL(`/appointments/${appointmentId}?status=success`, request.url)
       )
     }
 
     // Default case - redirect with generic error
     return NextResponse.redirect(
       new URL(
-        `/appointments/${appointmentId}?orderId=${orderId}&error=payment_failed`,
+        `/appointments/${appointmentId}?error=payment_failed`,
         request.url
       )
     )
   } catch (error) {
     console.error('Payment callback error:', error)
     return NextResponse.redirect(
-      new URL(
-        `/appointments/${appointmentId}?orderId=${orderId}&error=server_error`,
-        request.url
-      )
+      new URL(`/appointments/${appointmentId}?error=server_error`, request.url)
     )
   }
 }
