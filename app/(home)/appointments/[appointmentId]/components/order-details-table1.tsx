@@ -16,7 +16,12 @@ import Image from 'next/image'
 
 import { useActionState, useEffect, useMemo, useTransition } from 'react'
 
-import { Order } from '@/lib/generated/prisma'
+import {
+  Appointment,
+  Order,
+  PaymentDetails,
+  User,
+} from '@/lib/generated/prisma'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 
 import { toast } from 'sonner'
@@ -36,13 +41,16 @@ const errorMessages: Record<string, string> = {
     'این پرداخت در حال پردازش است. لطفا چند لحظه صبر کرده و صفحه را رفرش کنید.',
 }
 
+// interface OrderDetailsTableProps {
+//   order: Order & {
+//     paymentDetails: { transactionId: string | null } | null
+//   } & {
+//     user: { name: string; phoneNumber: string }
+//   }
+//   // isAdmin: boolean
+// }
 interface OrderDetailsTableProps {
-  order: Order & {
-    paymentDetails: { transactionId: string | null } | null
-  } & {
-    user: { name: string; phoneNumber: string }
-  }
-  isAdmin: boolean
+  order: Order & { paymentDetails: PaymentDetails }
 }
 
 // Helper function to safely parse date
@@ -53,7 +61,7 @@ const parseDate = (date: Date | string | null): Date | null => {
   return null
 }
 
-const OrderDetailsTable = ({ order, isAdmin }: OrderDetailsTableProps) => {
+const OrderDetailsTable = ({ order }: OrderDetailsTableProps) => {
   const searchParams = useSearchParams()
   const router = useRouter()
   const pathname = usePathname()

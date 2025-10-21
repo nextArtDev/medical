@@ -29,7 +29,7 @@ import prisma from '../prisma'
 import { format, toZonedTime } from 'date-fns-tz'
 import { getAppTimeZone } from '../utils'
 import { currentUser } from '../auth'
-import { AppointmentStatus, Prisma } from '../generated/prisma'
+import { AppointmentStatus, Prisma, User } from '../generated/prisma'
 
 // User related queries
 export async function getUserById(
@@ -1016,7 +1016,7 @@ export async function createOrder(
   doctorId: string,
   amount: number,
   currency: string
-): Promise<ApiResponse<Order>> {
+): Promise<ApiResponse<Order & { paymentDetails: PaymentDetails }>> {
   try {
     const order = await prisma.order.create({
       data: {
@@ -1025,9 +1025,15 @@ export async function createOrder(
         amount,
         currency,
       },
+      include: {
+        paymentDetails: true,
+      },
     })
 
-    return { success: true, data: order as Order }
+    return {
+      success: true,
+      data: order as Order & { paymentDetails: PaymentDetails },
+    }
   } catch (error) {
     console.error('Error creating order:', error)
     return { success: false, error: 'Failed to create order' }

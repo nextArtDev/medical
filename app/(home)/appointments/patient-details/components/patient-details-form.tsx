@@ -127,7 +127,8 @@ export default function PatientDetailsForm({
       if (result.success) {
         toast.success('Booking details saved', { id: bookingToastId })
         router.push(
-          `/appointments/payment?appointmentId=${result.data?.appointmentId}`
+          // `/appointments/payment?appointmentId=${result.data?.appointmentId}`
+          `/appointments/${result.data?.appointmentId}`
         )
       } else {
         const errorMessage =

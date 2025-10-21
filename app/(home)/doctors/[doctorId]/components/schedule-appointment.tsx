@@ -40,7 +40,7 @@ export default function AppointmentScheduler({
     userId,
     onConflict: () => {
       setSelectedSlot(null)
-      if (selectedDate) fetchSlotsForDate(selectedDate)
+      if (selectedDate) fetchSlotsForDate()
     },
   })
 
