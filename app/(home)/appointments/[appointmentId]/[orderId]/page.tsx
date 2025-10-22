@@ -41,19 +41,8 @@ const OrderDetailsPage = async ({
   if (!appointment.data?.doctorId) notFound()
 
   const user = currentUser()
-  // const order = await createOrder(
-  //   appointmentId,
-  //   appointment.data?.doctorId,
-  //   50000 // Fixed amount for appointment
-  // )
-  console.log(
-    'appointment.data?.doctorId from appointment route',
-    appointment.data?.doctorId
-  )
-  console.log('appointment from appointment route', appointment.data)
-  console.log('order from appointment route', orderId)
+
   const order = await getOrderById(orderId)
-  console.log('order from appointment route', order)
   // console.log(order.data?.paymentDetails)
   // if (!order.data || !order.success) notFound()
 

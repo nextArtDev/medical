@@ -98,7 +98,7 @@ export default function AppointmentScheduler({
     const toDate = addMonths(new Date(), 2)
 
     if (isAfter(startOfMonth(month), toDate)) {
-      setDate(undefined)
+      setDate(new Date())
       setSelectedSlot(null)
       setOutOfRangeMessage('This is too far in the future')
     } else {
@@ -198,7 +198,9 @@ export default function AppointmentScheduler({
       <div className="mt-6">
         <Button
           onClick={handleReservation}
-          disabled={!selectedSlot || isLoading || userRole === 'ADMIN'}
+          disabled={
+            !selectedSlot || isLoading || isPending || userRole === 'ADMIN'
+          }
           className="w-full py-6 body-semibold text-text-caption-2 mb-20"
         >
           {getButtonText()}
