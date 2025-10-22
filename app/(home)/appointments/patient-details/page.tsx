@@ -10,13 +10,14 @@
 // import { redirectToErrorPage } from '@/lib/config'
 import { toZonedTime } from 'date-fns-tz'
 import { format as formatDateFns } from 'date-fns'
-import { currentUser } from '@/lib/auth'
+
 import { getAppTimeZone, redirectToErrorPage } from '@/lib/utils'
 import prisma from '@/lib/prisma'
 import { getAppointmentData } from '@/lib/queries/home'
 import { updateGuestAppointmentWithUser } from '@/lib/actions'
 import { AppointmentData, PatientData } from '@/types/home'
 import PatientDetailsClient from './components/patient-details-client'
+import { currentUser } from '@/lib/auth-helpers'
 
 interface PatientDetailsSearchParams {
   appointmentId: string

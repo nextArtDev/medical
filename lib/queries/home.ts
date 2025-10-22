@@ -1,3 +1,4 @@
+'use server'
 import {
   ApiResponse,
   UserProfile,
@@ -28,8 +29,8 @@ import {
 import prisma from '../prisma'
 import { format, toZonedTime } from 'date-fns-tz'
 import { getAppTimeZone } from '../utils'
-import { currentUser } from '../auth'
 import { AppointmentStatus, Prisma, User } from '../generated/prisma'
+import { currentUser } from '../auth-helpers'
 
 // User related queries
 export async function getUserById(
@@ -277,6 +278,12 @@ export async function getAppointmentById(
             image: true,
           },
         },
+
+        Order: {
+          select: {
+            id: true,
+          },
+        },
       },
     })
 
@@ -284,7 +291,7 @@ export async function getAppointmentById(
       return { success: false, error: 'Appointment not found' }
     }
 
-    return { success: true, data: appointment as Appointment }
+    return { success: true, data: appointment as unknown as Appointment }
   } catch (error) {
     console.error('Error fetching appointment:', error)
     return { success: false, error: 'Failed to fetch appointment' }
@@ -987,6 +994,8 @@ export async function createTestimonial(
 // Payment related queries
 export async function getOrderById(orderId: string) {
   try {
+    // console.log('orderId', { orderId })
+    if (!orderId) throw Error('not orderId found!')
     const { unstable_noStore } = await import('next/cache')
     unstable_noStore()
     const data = await prisma.order.findFirst({
@@ -1017,6 +1026,9 @@ export async function createOrder(
   amount: number
   // currency: string
 ): Promise<ApiResponse<Order & { paymentDetails: PaymentDetails }>> {
+  // console.log({ appointmentId })
+  // console.log({ doctorId })
+  // console.log({ amount })
   try {
     const order = await prisma.order.create({
       data: {
@@ -1029,6 +1041,7 @@ export async function createOrder(
         paymentDetails: true,
       },
     })
+    // console.log('order from create order', order)
 
     return {
       success: true,

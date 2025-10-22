@@ -40,6 +40,7 @@ import {
 import { toast } from 'sonner'
 import { processAppointmentBooking } from '@/lib/actions'
 import { Edit, Phone } from 'lucide-react'
+import { createOrder } from '@/lib/queries/home'
 
 interface PatientDetailsFormProps {
   appointmentData: AppointmentData
@@ -126,10 +127,19 @@ export default function PatientDetailsForm({
       const result = await processAppointmentBooking(submissionData)
       if (result.success) {
         toast.success('Booking details saved', { id: bookingToastId })
-        router.push(
-          // `/appointments/payment?appointmentId=${result.data?.appointmentId}`
-          `/appointments/${result.data?.appointmentId}`
-        )
+
+        if (result.data?.appointmentId) {
+          const order = await createOrder(
+            result.data?.appointmentId,
+            appointmentData.doctorId,
+            50000 // Fixed amount for appointment
+          )
+
+          router.push(
+            // `/appointments/payment?appointmentId=${result.data?.appointmentId}`
+            `/appointments/${result.data?.appointmentId}/?orderId=${order.data?.id}`
+          )
+        }
       } else {
         const errorMessage =
           result.message || 'An error occured. Please try again'

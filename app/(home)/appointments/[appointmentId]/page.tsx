@@ -10,7 +10,8 @@ import {
   getAppointmentById,
   getOrderById,
 } from '@/lib/queries/home'
-import { currentUser, User } from '@/lib/auth'
+import { User } from '@/lib/auth'
+import { currentUser } from '@/lib/auth-helpers'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
@@ -31,19 +32,30 @@ function OrderDetailsTableWrapper({
 
 const OrderDetailsPage = async ({
   params,
+  searchParams,
 }: {
   params: Promise<{ appointmentId: string }>
+  searchParams: Promise<{ orderId: string }>
 }) => {
   const appointmentId = (await params).appointmentId
+  const { orderId } = await searchParams
   const appointment = await getAppointmentById(appointmentId)
   if (!appointment.data?.doctorId) notFound()
+
   const user = currentUser()
   // const order = await createOrder(
   //   appointmentId,
   //   appointment.data?.doctorId,
   //   50000 // Fixed amount for appointment
   // )
-  // console.log(order)
+  console.log(
+    'appointment.data?.doctorId from appointment route',
+    appointment.data?.doctorId
+  )
+  console.log('appointment from appointment route', appointment.data)
+  console.log('order from appointment route', orderId)
+  const order = await getOrderById(orderId)
+  console.log('order from appointment route', order)
   // console.log(order.data?.paymentDetails)
   // if (!order.data || !order.success) notFound()
 
@@ -52,8 +64,8 @@ const OrderDetailsPage = async ({
       <Suspense fallback={<OrderDetailsSkeleton />}>
         <OrderDetailsTableWrapper
           order={{
-            ...(order.data as Order),
-            paymentDetails: order.data.paymentDetails ?? ({} as PaymentDetails),
+            ...(order as Order),
+            paymentDetails: order?.paymentDetails ?? ({} as PaymentDetails),
           }}
         />
       </Suspense>

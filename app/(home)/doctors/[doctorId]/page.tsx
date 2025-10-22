@@ -1,4 +1,3 @@
-import { currentUser } from '@/lib/auth'
 import DoctorProfileTopCard from './components/doctorprofile-topcard'
 import { notFound } from 'next/navigation'
 // import AppointmentScheduler from './components/schedule-appointment'
@@ -7,6 +6,7 @@ import PatientReviews from './components/patient-reviews'
 import { getDoctorProfile } from '@/lib/queries/home'
 import { cleanupExpiredReservations } from './lib/actions'
 import AppointmentScheduler from './components/schedule-appointment'
+import { currentUser } from '@/lib/auth-helpers'
 interface Params {
   doctorId: string
 }

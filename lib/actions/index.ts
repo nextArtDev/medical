@@ -3,7 +3,7 @@ import { revalidatePath } from 'next/cache'
 import prisma from '../prisma'
 import { AppointmentStatus, Prisma } from '../generated/prisma'
 import { FieldErrors } from 'react-hook-form'
-import { currentUser } from '../auth'
+
 import { fullReviewDataSchema, PatientDetailsFormSchema } from '../schemas'
 import {
   ApiResponse,
@@ -18,6 +18,7 @@ import { getAppTimeZone } from '../utils'
 import { fromZonedTime } from 'date-fns-tz'
 import { addMinutes, isValid, parse } from 'date-fns-jalali'
 import { v4 as uuidv4 } from 'uuid'
+import { currentUser } from '../auth-helpers'
 
 export interface ServerActionResponse<T = any> {
   success: boolean

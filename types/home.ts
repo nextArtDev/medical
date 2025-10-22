@@ -89,6 +89,7 @@ export interface Appointment {
   updatedAt: Date
   doctor: UserProfile
   user: UserProfile | null // Changed from UserProfile | undefined to UserProfile | null
+  Order: { id: string }
 }
 
 export interface AppointmentSlot {

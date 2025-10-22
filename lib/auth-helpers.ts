@@ -4,6 +4,7 @@ import { auth } from '@/lib/auth'
 import prisma from '@/lib/prisma'
 import { headers } from 'next/headers'
 import { betterFetch } from '@better-fetch/fetch'
+import { cache } from 'react'
 
 export async function getCurrentUser() {
   // console.log('Session')
@@ -74,3 +75,27 @@ export async function getCurrentUserWithFetch() {
     return null
   }
 }
+
+export const currentUser = cache(async () => {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  })
+
+  if (!session?.user?.id) {
+    return null
+  }
+
+  // Fetch the complete user data including role
+  const user = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      phoneNumber: true,
+      role: true,
+    },
+  })
+
+  return user
+})
