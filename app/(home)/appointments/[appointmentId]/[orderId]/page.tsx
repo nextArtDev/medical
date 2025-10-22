@@ -1,10 +1,10 @@
 import { Metadata } from 'next'
 import { notFound } from 'next/navigation'
-import OrderDetailsTable from './components/order-details-table1'
+import OrderDetailsTable from '../components/order-details-table1'
 
 import { Appointment, Order, PaymentDetails } from '@/lib/generated/prisma'
 import { Suspense } from 'react'
-import { OrderDetailsSkeleton } from './components/Skeletons'
+import { OrderDetailsSkeleton } from '../components/Skeletons'
 import {
   createOrder,
   getAppointmentById,
@@ -32,13 +32,11 @@ function OrderDetailsTableWrapper({
 
 const OrderDetailsPage = async ({
   params,
-  searchParams,
 }: {
-  params: Promise<{ appointmentId: string }>
-  searchParams: Promise<{ orderId: string }>
+  params: Promise<{ appointmentId: string; orderId: string }>
 }) => {
   const appointmentId = (await params).appointmentId
-  const { orderId } = await searchParams
+  const orderId = (await params).orderId
   const appointment = await getAppointmentById(appointmentId)
   if (!appointment.data?.doctorId) notFound()
 

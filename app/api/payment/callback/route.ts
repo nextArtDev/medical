@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
     if (!Authority || !Status || !appointmentId || !orderId) {
       return NextResponse.redirect(
         new URL(
-          `/appointments/${appointmentId}?error=invalid_params`,
+          `/appointments/${appointmentId}/${orderId}?error=invalid_params`,
           request.url
         )
       )
@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
 
     // Process payment approval
     const result = await zarinpalPaymentApproval(
-      `/appointments/${appointmentId}`,
+      `/appointments/${appointmentId}/${orderId}`,
       orderId,
       Authority,
       appointmentId || '',
@@ -41,7 +41,7 @@ export async function GET(request: NextRequest) {
       const errorMessage = encodeURIComponent(result.errors._form[0])
       return NextResponse.redirect(
         new URL(
-          `/appointments/${appointmentId}?error=${errorMessage}`,
+          `/appointments/${appointmentId}/${orderId}?error=${errorMessage}`,
           request.url
         )
       )
@@ -51,13 +51,16 @@ export async function GET(request: NextRequest) {
       if (result.alreadyPaid) {
         return NextResponse.redirect(
           new URL(
-            `/appointments/${appointmentId}?status=already_paid`,
+            `/appointments/${appointmentId}/${orderId}?status=already_paid`,
             request.url
           )
         )
       }
       return NextResponse.redirect(
-        new URL(`/appointments/${appointmentId}?status=success`, request.url)
+        new URL(
+          `/appointments/${appointmentId}/${orderId}?status=success`,
+          request.url
+        )
       )
     }
 
@@ -71,7 +74,10 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('Payment callback error:', error)
     return NextResponse.redirect(
-      new URL(`/appointments/${appointmentId}?error=server_error`, request.url)
+      new URL(
+        `/appointments/${appointmentId}/${orderId}?error=server_error`,
+        request.url
+      )
     )
   }
 }

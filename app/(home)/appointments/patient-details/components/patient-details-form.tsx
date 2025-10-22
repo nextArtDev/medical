@@ -137,7 +137,7 @@ export default function PatientDetailsForm({
 
           router.push(
             // `/appointments/payment?appointmentId=${result.data?.appointmentId}`
-            `/appointments/${result.data?.appointmentId}/?orderId=${order.data?.id}`
+            `/appointments/${result.data?.appointmentId}/${order.data?.id}`
           )
         }
       } else {
