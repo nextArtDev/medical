@@ -2,6 +2,7 @@ import { type ClassValue, clsx } from 'clsx'
 import { HelpCircle, icons, LucideIcon } from 'lucide-react'
 import { twMerge } from 'tailwind-merge'
 import { redirect } from 'next/navigation'
+import { format } from 'date-fns-jalali'
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -51,4 +52,10 @@ export const redirectToErrorPage = (
   })
   // Redirect to the root path with error info
   redirect(`/?${searchParams.toString()}`)
+}
+
+export function formatBookingId(aptId: string): string {
+  const datePart = format(new Date(), 'yyyyMMdd') //20250807
+  const apptEnd = aptId.slice(-4).toUpperCase()
+  return `HH-${datePart}-${apptEnd}`
 }

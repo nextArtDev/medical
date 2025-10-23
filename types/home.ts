@@ -1,3 +1,4 @@
+import { AppointmentStatus } from '@/lib/generated/prisma'
 import { PatientDetailsFormValues } from '@/lib/schemas'
 
 // Base types for API responses
@@ -363,4 +364,26 @@ export type AppointmentSubmissionData = PatientDetailsFormValues & {
 export interface AppointmentDataWithBilling extends AppointmentData {
   fee: number
   patientEmail: string
+}
+
+export interface ConfirmationDetailsData {
+  appointment: {
+    id: string
+    status: AppointmentStatus
+    startDateTime: Date
+    reason: string | null
+    patientName: string
+    patientEmail: string
+    patientPhone: string
+  }
+  doctor: {
+    name: string
+    speciality: string
+  }
+  transaction: {
+    gatewayTransactionId: string
+    amount: number
+    currency: string
+    // paymentGateway: string
+  } | null
 }

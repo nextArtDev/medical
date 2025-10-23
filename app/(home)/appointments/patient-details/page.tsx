@@ -1,13 +1,3 @@
-// import PatientDetailsClient from './patient-details-client'
-// import { AppointmentData, PatientData } from '@/types'
-// import {
-//   updateGuestAppointmentWithUser,
-//   getAppointmentData,
-// } from '@/lib/actions/appointment.actions'
-// import { getAppTimeZone } from '@/lib/config'
-// import { auth } from '@/auth'
-// import { prisma } from '@/db/prisma'
-// import { redirectToErrorPage } from '@/lib/config'
 import { toZonedTime } from 'date-fns-tz'
 import { format as formatDateFns } from 'date-fns'
 

@@ -18,6 +18,7 @@ import { useActionState, useEffect, useMemo, useTransition } from 'react'
 
 import {
   Appointment,
+  AppointmentStatus,
   Order,
   PaymentDetails,
   User,
@@ -27,7 +28,13 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { toast } from 'sonner'
 import { updateOrderToPaidCOD, zarinpalPayment } from '@/lib/actions/payment'
 import { format } from 'date-fns-jalali'
-// import OrderPayment from './OrderPayment'
+import { useQuery } from '@tanstack/react-query'
+import { getConfirmationDetails } from '@/lib/queries/home'
+import { ApiResponse, ConfirmationDetailsData } from '@/types/home'
+import { toZonedTime } from 'date-fns-tz'
+import { formatBookingId, getAppTimeZone } from '@/lib/utils'
+import { Check, Info } from 'lucide-react'
+import { Separator } from '@/components/ui/separator'
 
 // Types
 const errorMessages: Record<string, string> = {
@@ -41,16 +48,9 @@ const errorMessages: Record<string, string> = {
     'این پرداخت در حال پردازش است. لطفا چند لحظه صبر کرده و صفحه را رفرش کنید.',
 }
 
-// interface OrderDetailsTableProps {
-//   order: Order & {
-//     paymentDetails: { transactionId: string | null } | null
-//   } & {
-//     user: { name: string; phoneNumber: string }
-//   }
-//   // isAdmin: boolean
-// }
 interface OrderDetailsTableProps {
   order: Order & { paymentDetails: PaymentDetails }
+  appointment: Appointment
 }
 
 // Helper function to safely parse date
@@ -65,8 +65,6 @@ const OrderDetailsTable = ({ order }: OrderDetailsTableProps) => {
   const searchParams = useSearchParams()
   const router = useRouter()
   const pathname = usePathname()
-  // const orderId = searchParams?.get('orderId')
-  // Show toast messages based on URL parameters
 
   useEffect(() => {
     const status = searchParams?.get('status')
@@ -93,16 +91,16 @@ const OrderDetailsTable = ({ order }: OrderDetailsTableProps) => {
   const {
     id,
     amount,
-
     paymentStatus,
     paidAt: rawPaidAt,
     paymentDetails,
     appointmentId,
   } = order
-  // console.log({ order })
+
   const isPaid = paymentStatus === 'Paid'
   const paidAt = parseDate(rawPaidAt)
   const transactionId = paymentDetails?.transactionId
+
   // Payment action state
   const [actionState, zarinpalPaymentAction, isPending] = useActionState(
     zarinpalPayment.bind(null, `/appointments/${appointmentId}`, id),
@@ -111,6 +109,19 @@ const OrderDetailsTable = ({ order }: OrderDetailsTableProps) => {
       payment: {},
     }
   )
+
+  // Get confirmation details only when payment is successful
+  const { data: confirmationDetails, isLoading: isConfirmationLoading } =
+    useQuery<ApiResponse<ConfirmationDetailsData> | null>({
+      queryKey: ['confirmation-details', appointmentId],
+      queryFn: async () => {
+        // Only fetch confirmation details if payment is successful
+        if (!appointmentId || !isPaid) return null
+        return await getConfirmationDetails(appointmentId)
+      },
+      enabled: !!appointmentId && !!isPaid, // Only run if we have appointmentId and payment is successful
+      staleTime: 1000 * 60 * 5, // Cache for 5 minutes
+    })
 
   // Handle payment URL redirect
   useEffect(() => {
@@ -128,21 +139,29 @@ const OrderDetailsTable = ({ order }: OrderDetailsTableProps) => {
 
   return (
     <div className="container mx-auto py-4">
-      {/* <h1 className="text-2xl font-bold mb-6">سفارش {formatId(id)}</h1> */}
-
       <div className="grid md:grid-cols-3 gap-6">
         {/* Main Content */}
         <div className="md:col-span-2 space-y-4">
           {/* Payment Status Card */}
-          <PaymentStatusCard
+          {/* <PaymentStatusCard
             isPaid={isPaid}
             paidAt={paidAt}
             transactionId={transactionId}
-          />
+          /> */}
+
+          {/* Confirmation Details Section - Only show when payment is successful and we have confirmation details */}
+          {isPaid &&
+            confirmationDetails?.success &&
+            confirmationDetails.data && (
+              <ConfirmationDetailsSection
+                confirmationDetails={confirmationDetails.data}
+                appointmentId={appointmentId}
+              />
+            )}
         </div>
 
         {/* Order Summary Sidebar */}
-        <div>
+        {/* <div>
           <OrderSummaryCard
             amount={+amount}
             isPending={isPending}
@@ -151,6 +170,169 @@ const OrderDetailsTable = ({ order }: OrderDetailsTableProps) => {
             orderId={id}
             paidAt={paidAt}
           />
+        </div> */}
+      </div>
+    </div>
+  )
+}
+
+// Extracted confirmation details section into a separate component
+const ConfirmationDetailsSection = ({
+  confirmationDetails,
+  appointmentId,
+}: {
+  confirmationDetails: ConfirmationDetailsData
+  appointmentId: string
+}) => {
+  const { appointment, doctor, transaction } = confirmationDetails
+  const isCashPayment = appointment.status === AppointmentStatus.CASH
+  const timeZone = getAppTimeZone()
+  // Convert UTC date to the application's timezone
+  const zonedTime = toZonedTime(appointment.startDateTime, timeZone)
+
+  return (
+    <div className="w-full max-w-[768px] mx-auto bg-background mt-[15px] mb-[15px]">
+      {/* Header Section */}
+      <div className="text-center pt-8 pb-8">
+        <div className="w-16 h-16 bg-[#DCFCE7] rounded-full flex items-center justify-center mx-auto mb-4">
+          <Check className="text-green-600 w-8 h-8" />
+        </div>
+        <h2 className="text-text-title">
+          {isCashPayment ? 'Appointment Confirmed' : 'Payment Successful'}
+        </h2>
+        <p className="mt-2 body-regular text-text-body-subtle">
+          {isCashPayment
+            ? 'Please arrive at the counter 30 min before your appointment to make the payment.'
+            : 'Your appointment has been confirmed'}
+        </p>
+      </div>
+      <Separator className="bg-border-2" />
+
+      <div className="p-6 space-y-6">
+        {/* Booking Details Section (Conditional) */}
+        {!isCashPayment && transaction && (
+          <div className="p-4 rounded-lg bg-primary-subtle">
+            <div className="flex justify-between mb-4 ">
+              <div className="body-semibold text-text-title">جزئیات نوبت</div>
+              <div className="body-small">{formatBookingId(appointmentId)}</div>
+            </div>
+            <div className="space-y-3">
+              <div className="flex justify-between">
+                <div className="body-small text-text-body-subtle">
+                  Payment ID
+                </div>
+                <div className="body-small text-text-title">
+                  {transaction.gatewayTransactionId}
+                </div>
+              </div>
+              <div className="flex justify-between">
+                <div className="body-small text-text-body-subtle">
+                  میزان پرداخت
+                </div>
+                <div className="body-small text-text-title">
+                  {transaction.amount.toFixed(2)} {transaction.currency}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Appointment Information Section */}
+        <div className="p-4 rounded-lg bg-primary-subtle">
+          <div className="body-semibold text-text-title mb-4">اطلاعات نوبت</div>
+          <div className="space-y-3">
+            <div className="flex justify-between">
+              <div className="body-small text-text-body-subtle">زمان</div>
+              <div className="body-small text-text-title">
+                {`${format(zonedTime, 'MMMM dd, yyyy')} at ${format(
+                  zonedTime,
+                  'hh:mm a'
+                )}`}
+              </div>
+            </div>
+            <div className="flex justify-between">
+              <div className="body-small text-text-body-subtle">دکتر</div>
+              <div className="body-small text-text-title">{doctor.name}</div>
+            </div>
+            <div className="flex justify-between">
+              <div className="body-small text-text-body-subtle">تخصص</div>
+              <div className="body-small text-text-title">
+                {doctor.speciality}
+              </div>
+            </div>
+            <div className="flex justify-between">
+              <div className="body-small text-text-body-subtle">نوع نوبت</div>
+              <div className="body-small text-text-title capitalize">
+                {appointment.reason?.replace(/_/g, ' ').toLowerCase() ||
+                  'Regular Checkup'}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Patient Details Section */}
+        <div className="p-4 rounded-lg bg-primary-subtle">
+          <div className="body-semibold text-text-title mb-4">بیمار</div>
+          <div className="space-y-3">
+            <div className="flex justify-between">
+              <div className="body-small text-text-body-subtle">نام</div>
+              <div className="body-small text-text-title">
+                {appointment.patientName}
+              </div>
+            </div>
+            <div className="flex justify-between">
+              <div className="body-small text-text-body-subtle">ایمیل</div>
+              <div className="body-small text-text-title">
+                {appointment.patientEmail}
+              </div>
+            </div>
+            <div className="flex justify-between">
+              <div className="body-small text-text-body-subtle">شماره</div>
+              <div className="body-small text-text-title">
+                {appointment.patientPhone}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Appointment Instructions Section */}
+        <div className="flex p-4 rounded-lg bg-primary-subtle">
+          <div className="flex-shrink-0 mt-[3px]">
+            <Info className="h-5 w-5 text-blue-500" aria-hidden="true" />
+          </div>
+          <div className="ml-3">
+            <div className=" body-semibold text-alert-1 mb-1">
+              Appointment Instructions
+            </div>
+            <div className="mt-2 body-small text-notice-1">
+              <ul className="space-y-1">
+                <li>
+                  {isCashPayment
+                    ? 'Please arrive 30 min before your scheduled time to complete the payment at the counter.'
+                    : 'Please arrive 15 minutes before your scheduled time.'}
+                </li>
+                <li>Bring any relevant medical records or test reports.</li>
+                <li>Wear a mask during your visit.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="flex flex-col md:flex-row justify-between gap-4">
+          <Button
+            variant="outline"
+            className="flex-1 text-xs md:text-sm text-text-body font-normal"
+            asChild
+          >
+            <Link href="/user/profile">دیدن نوبت</Link>
+          </Button>
+          <Button
+            className="flex-1 text-xs md:text-sm font-bold text-text-caption-2"
+            asChild
+          >
+            <Link href="/">برگشت به صفحه اصلی</Link>
+          </Button>
         </div>
       </div>
     </div>
@@ -263,7 +445,6 @@ const OrderSummaryCard = ({
                 {isPending ? 'در حال پردازش...' : 'پرداخت'}
               </Button>
             </form>
-            {/* <OrderPayment orderId={orderId} amount={totalPrice} /> */}
           </div>
         )}
       </CardContent>

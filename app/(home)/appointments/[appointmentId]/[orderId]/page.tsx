@@ -2,7 +2,7 @@ import { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import OrderDetailsTable from '../components/order-details-table1'
 
-import { Appointment, Order, PaymentDetails } from '@/lib/generated/prisma'
+import { Order, PaymentDetails } from '@/lib/generated/prisma'
 import { Suspense } from 'react'
 import { OrderDetailsSkeleton } from '../components/Skeletons'
 import {
@@ -12,6 +12,7 @@ import {
 } from '@/lib/queries/home'
 import { User } from '@/lib/auth'
 import { currentUser } from '@/lib/auth-helpers'
+import { Appointment } from '@/types/home'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
@@ -21,13 +22,15 @@ export const metadata: Metadata = {
 
 function OrderDetailsTableWrapper({
   order,
+  appointment,
 }: // isAdmin,
 {
   order: Order & { paymentDetails: PaymentDetails }
+  appointment: Appointment
 
   // isAdmin: boolean
 }) {
-  return <OrderDetailsTable order={order} />
+  return <OrderDetailsTable order={order} appointment={appointment} />
 }
 
 const OrderDetailsPage = async ({
@@ -54,6 +57,7 @@ const OrderDetailsPage = async ({
             ...(order as Order),
             paymentDetails: order?.paymentDetails ?? ({} as PaymentDetails),
           }}
+          appointment={appointment.data as Appointment}
         />
       </Suspense>
     </section>
