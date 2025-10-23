@@ -131,7 +131,7 @@ export default async function PatientDetails({
     doctorId: appointment.doctorId,
     doctorName: appointment.doctor.name ?? 'N/A',
     doctorSpecilaity: appointment.doctor.doctorProfile?.specialty ?? 'General',
-    doctorImage: appointment.doctor.image,
+    doctorImage: appointment.doctor.image ?? '',
     date: formattedDateString,
     timeSlot: formattedTimeString,
     endTime: formattedEndTimeString,

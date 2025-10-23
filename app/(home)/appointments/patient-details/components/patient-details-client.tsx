@@ -1,9 +1,9 @@
 'use client'
 
 import PatientDetailsForm from './patient-details-form'
-import { ChevronLeft } from 'lucide-react'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 import Image from 'next/image'
-import { format, parseISO } from 'date-fns'
+import { format, parseISO } from 'date-fns-jalali'
 import Link from 'next/link'
 import { AppointmentData, PatientData } from '@/types/home'
 import BookingSteps from './booking-steps'
@@ -20,7 +20,7 @@ export default function PatientDetailsClient({
   const { doctorName, doctorSpecilaity, doctorImage, date, timeSlot } =
     initialAppointmentData
 
-  const formattedDate = date ? format(parseISO(date), 'MMMM d,yyyy') : ''
+  const formattedDate = date ? date : ''
   const formattedTime = timeSlot
     ? format(parseISO(`1970-01-01T${timeSlot}:00`), 'hh:mm a')
     : ''
@@ -33,15 +33,15 @@ export default function PatientDetailsClient({
           href={`/doctors/${initialAppointmentData.doctorId}`}
           className="flex items-center"
         >
-          <ChevronLeft className="w-4 h-4 mr-1" />
-          <span className="body-regular">Back to Doctor Profile</span>
+          <ChevronRight className="w-4 h-4 ml-1" />
+          <span className="body-regular">برگشت به صفحه دکتر</span>
         </Link>
         <div className="text-right">
           <div className="body-small text-text-body-subtle">
-            Selected Appointment
+            نوبت انتخاب شده:
           </div>
           <div className="body-semibold text-text-title">
-            {formattedDate} at {formattedTime}
+            {formattedDate} | {formattedTime}
           </div>
         </div>
       </div>

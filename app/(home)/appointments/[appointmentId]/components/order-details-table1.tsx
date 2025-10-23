@@ -139,9 +139,9 @@ const OrderDetailsTable = ({ order }: OrderDetailsTableProps) => {
 
   return (
     <div className="container mx-auto py-4">
-      <div className="grid md:grid-cols-3 gap-6">
+      <div className="grid  gap-6">
         {/* Main Content */}
-        <div className="md:col-span-2 space-y-4">
+        <div className=" space-y-4">
           {/* Payment Status Card */}
           {/* <PaymentStatusCard
             isPaid={isPaid}
@@ -191,7 +191,7 @@ const ConfirmationDetailsSection = ({
   const zonedTime = toZonedTime(appointment.startDateTime, timeZone)
 
   return (
-    <div className="w-full max-w-[768px] mx-auto bg-background mt-[15px] mb-[15px]">
+    <div className="w-full max-w-[768px] mx-auto  mt-[15px] mb-[15px]">
       {/* Header Section */}
       <div className="text-center pt-8 pb-8">
         <div className="w-16 h-16 bg-[#DCFCE7] rounded-full flex items-center justify-center mx-auto mb-4">

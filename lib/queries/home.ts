@@ -1620,8 +1620,8 @@ export async function getUserAppointments(params?: {
     const timeZone = getAppTimeZone()
 
     // 7. Map database results to the required 'Appointment' interface
-    const formattedAppointments: Partial<Appointment>[] =
-      appointmentsFromDb.map((appt) => {
+    const formattedAppointments: Appointment[] = appointmentsFromDb.map(
+      (appt) => {
         const mappedStatus = mapAppointmentStatus(appt.status)
         if (!mappedStatus) {
           // This should ideally not happen due to the where clause, but it's a good safeguard.
@@ -1632,7 +1632,7 @@ export async function getUserAppointments(params?: {
         const zonedTime = toZonedTime(appt.appointmentStartUTC, timeZone)
 
         return {
-          appointmentId: appt.appointmentId,
+          appointmentId: appt.appointmentId!,
           doctorName: appt.doctor.name,
           doctorId: appt.doctorId,
           specialty: appt.doctor.doctorProfile?.specialty ?? 'General',
@@ -1642,7 +1642,8 @@ export async function getUserAppointments(params?: {
           reasonForVisit: appt.reasonForVisit ?? undefined,
           isReviewed: !!appt.testimonial, // Check if a testimonial exists
         }
-      })
+      }
+    )
 
     // 8. Calculate total pages and return the successful response
     const totalPages = Math.ceil(totalAppointments / limit)
@@ -1704,6 +1705,7 @@ export async function getAppointmentData({
           include: {
             // Assuming 'doctorProfile' is the name of the relation on the User model
             doctorProfile: true,
+            images: { select: { url: true }, take: 1 },
           },
         },
       },

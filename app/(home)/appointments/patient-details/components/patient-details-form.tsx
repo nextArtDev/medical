@@ -90,7 +90,7 @@ export default function PatientDetailsForm({
   async function onSubmit(data: PatientDetailsFormValues) {
     if (!data.useAlternatePhone && !patientDetails.phoneNumber) {
       toast.error(
-        'Your profile phone number is missing. Please provide one for this booking or update your phone number in your profile'
+        'شماره تلفن پروفایل شما موجود نیست. لطفاً برای این رزرو یک شماره تلفن ارائه دهید یا شماره تلفن خود را در پروفایل خود به‌روز کنید'
       )
       form.setValue('useAlternatePhone', true, { shouldValidate: true })
       setTimeout(() => {
@@ -99,7 +99,7 @@ export default function PatientDetailsForm({
       return
     }
 
-    const bookingToastId = toast.loading('Processing booking..')
+    const bookingToastId = toast.loading('در حال پردازش رزرو...')
     const dob = data.dateOfBirth
       ? parse(data.dateOfBirth, 'dd/MM/yyyy', new Date())
       : ''
@@ -126,7 +126,7 @@ export default function PatientDetailsForm({
 
       const result = await processAppointmentBooking(submissionData)
       if (result.success) {
-        toast.success('Booking details saved', { id: bookingToastId })
+        toast.success('جزئیات رزرو ذخیره شد', { id: bookingToastId })
 
         if (result.data?.appointmentId) {
           const order = await createOrder(
@@ -142,16 +142,16 @@ export default function PatientDetailsForm({
         }
       } else {
         const errorMessage =
-          result.message || 'An error occured. Please try again'
+          result.message || 'خطایی رخ داد. لطفاً دوباره تلاش کنید'
         toast.error(errorMessage, { id: bookingToastId })
       }
     } catch (error) {
       const errorMessage =
         error instanceof Error
           ? error.message
-          : 'An error occured during booking. Please try again '
+          : 'خطایی در حین رزرو رخ داد. لطفاً دوباره تلاش کنید'
 
-      toast.error(`Booking Failed : ${errorMessage}`, { id: bookingToastId })
+      toast.error(`رزرو ناموفق: ${errorMessage}`, { id: bookingToastId })
     }
   }
 
@@ -167,7 +167,7 @@ export default function PatientDetailsForm({
             render={() => (
               <FormItem className="gap-0">
                 <FormLabel className="text-lg md:text-xl font-semibold text-text-title mb-4">
-                  Who is this appointment for?
+                  این نوبت برای چه کسی است؟
                 </FormLabel>
                 <FormControl>
                   <div className="grid grid-cols-2 gap-4">
@@ -187,7 +187,7 @@ export default function PatientDetailsForm({
                           : 'border-border-2'
                       }`}
                     >
-                      Myself
+                      خودم
                     </Button>
                     <Button
                       type="button"
@@ -205,7 +205,7 @@ export default function PatientDetailsForm({
                           : 'border-border-2'
                       }`}
                     >
-                      Someone Else
+                      شخص دیگر
                     </Button>
                   </div>
                 </FormControl>
@@ -223,7 +223,7 @@ export default function PatientDetailsForm({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="text-xs md:text-sm text-text-body font-bold">
-                      Relationship to Patient
+                      نسبت با بیمار
                     </FormLabel>
                     <Select
                       onValueChange={field.onChange}
@@ -233,15 +233,15 @@ export default function PatientDetailsForm({
                         <SelectTrigger className="w-full">
                           <SelectValue
                             className="text-xs md:text-sm text-text-body font-normal"
-                            placeholder="Select relationship"
+                            placeholder="انتخاب نسبت"
                           />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent className="border-border">
-                        <SelectItem value="CHILD">Child</SelectItem>
-                        <SelectItem value="SPOUSE">Spouse</SelectItem>
-                        <SelectItem value="PARENT">Parent</SelectItem>
-                        <SelectItem value="OTHER">Other</SelectItem>
+                        <SelectItem value="CHILD">فرزند</SelectItem>
+                        <SelectItem value="SPOUSE">همسر</SelectItem>
+                        <SelectItem value="PARENT">والدین</SelectItem>
+                        <SelectItem value="OTHER">سایر</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -254,12 +254,12 @@ export default function PatientDetailsForm({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="text-xs md:text-sm text-text-body font-bold">
-                      Full Name of Patient
+                      نام کامل بیمار
                     </FormLabel>
                     <FormControl>
                       <Input
                         className="text-xs md:text-sm text-text-body font-normal"
-                        placeholder="John Doe"
+                        placeholder="نام کامل بیمار"
                         {...field}
                       />
                     </FormControl>
@@ -273,17 +273,17 @@ export default function PatientDetailsForm({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="text-xs md:text-sm text-text-body font-bold">
-                      Date of Birth of Patient
+                      تاریخ تولد بیمار
                     </FormLabel>
                     <FormControl>
                       <Input
                         className="text-xs md:text-sm text-text-body font-normal"
-                        placeholder="DD/MM/YYYY"
+                        placeholder="روز/ماه/سال"
                         {...field}
                       />
                     </FormControl>
                     <FormDescription className="text-xs text-text-caption-1">
-                      Please enter the date in DD/MM/YYYY format.
+                      لطفاً تاریخ را به صورت روز/ماه/سال وارد کنید.
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -296,7 +296,7 @@ export default function PatientDetailsForm({
           {patientType === 'MYSELF' && (
             <div className="space-y-2">
               <FormLabel className="text-xs md:text-sm text-text-body font-bold">
-                Full Name
+                نام کامل
               </FormLabel>
               <div className="relative">
                 <Input
@@ -310,7 +310,7 @@ export default function PatientDetailsForm({
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className="absolute right-3 top-1/2 -translate-y-1/2"
+                  className="absolute left-3 top-1/2 -translate-y-1/2"
                   onClick={() =>
                     router.push(
                       `/user/profile?appointmentId=${appointmentData.appointmentId}`
@@ -321,7 +321,7 @@ export default function PatientDetailsForm({
                 </Button>
               </div>
               <p className="text-caption">
-                To update your name please visit your profile.
+                برای به‌روزرسانی نام خود، لطفاً به پروفایل خود مراجعه کنید.
               </p>
             </div>
           )}
@@ -333,7 +333,7 @@ export default function PatientDetailsForm({
             render={({ field }) => (
               <FormItem>
                 <FormLabel className="text-xs md:text-sm text-text-body font-bold">
-                  Email Address
+                  آدرس ایمیل
                 </FormLabel>
                 <FormControl>
                   <Input
@@ -349,7 +349,7 @@ export default function PatientDetailsForm({
 
           <div className="space-y-2">
             <FormLabel className="text-xs md:text-sm text-text-body font-bold">
-              Primary Phone Number
+              شماره تلفن اصلی
             </FormLabel>
             <div className="relative">
               <Input
@@ -363,7 +363,7 @@ export default function PatientDetailsForm({
                 type="button"
                 variant="ghost"
                 size="icon"
-                className="absolute right-3 top-1/2 -translate-y-1/2"
+                className="absolute left-3 top-1/2 -translate-y-1/2"
                 onClick={() =>
                   router.push(
                     `/user/profile?appointmentId=${appointmentData.appointmentId}`
@@ -374,8 +374,8 @@ export default function PatientDetailsForm({
               </Button>
             </div>
             <p className="text-caption">
-              This is your profile phone number. To update it, please visit your
-              profile settings.
+              این شماره تلفن پروفایل شماست. برای به‌روزرسانی آن، لطفاً به
+              تنظیمات پروفایل خود مراجعه کنید.
             </p>
           </div>
 
@@ -383,7 +383,7 @@ export default function PatientDetailsForm({
             control={form.control}
             name="useAlternatePhone"
             render={({ field }) => (
-              <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md">
+              <FormItem className="flex flex-row  items-start space-x-3 space-x-reverse space-y-0 rounded-md">
                 <FormControl>
                   <Checkbox
                     checked={field.value}
@@ -392,7 +392,7 @@ export default function PatientDetailsForm({
                 </FormControl>
                 <div className="space-y-1 leading-none">
                   <FormLabel className="body-small text-text-body-subtle">
-                    Use a different phone number for this appointment
+                    استفاده از شماره تلفن متفاوت برای این نوبت
                   </FormLabel>
                 </div>
               </FormItem>
@@ -406,10 +406,10 @@ export default function PatientDetailsForm({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="text-xs md:text-sm text-text-body font-bold">
-                    Alternate Phone Number
+                    شماره تلفن جایگزین
                   </FormLabel>
                   <FormControl>
-                    <Input placeholder="+11234567890" {...field} />
+                    <Input placeholder="09123456789" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -423,7 +423,7 @@ export default function PatientDetailsForm({
             render={({ field }) => (
               <FormItem>
                 <FormLabel className="text-xs md:text-sm text-text-body font-bold">
-                  Reason for Visit
+                  دلیل مراجعه
                 </FormLabel>
                 <Select
                   onValueChange={field.onChange}
@@ -433,17 +433,17 @@ export default function PatientDetailsForm({
                     <SelectTrigger className="w-full">
                       <SelectValue
                         className="text-xs md:text-sm font-normal"
-                        placeholder="Select a reason"
+                        placeholder="انتخاب دلیل"
                       />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="Consultation">Consultation</SelectItem>
-                    <SelectItem value="Follow-up">Follow-up</SelectItem>
+                    <SelectItem value="Consultation">مشاوره</SelectItem>
+                    <SelectItem value="Follow-up">پیگیری</SelectItem>
                     <SelectItem value="Routine Check-up">
-                      Routine Check-up
+                      معاینه دوره‌ای
                     </SelectItem>
-                    <SelectItem value="New Issue">New Issue</SelectItem>
+                    <SelectItem value="New Issue">مشکل جدید</SelectItem>
                   </SelectContent>
                 </Select>
                 <FormMessage />
@@ -457,11 +457,11 @@ export default function PatientDetailsForm({
             render={({ field }) => (
               <FormItem>
                 <FormLabel className="text-xs md:text-sm text-text-body font-bold">
-                  Additional Notes
+                  یادداشت‌های اضافی
                 </FormLabel>
                 <FormControl>
                   <Textarea
-                    placeholder="Add any additional information about your visit"
+                    placeholder="اطلاعات اضافی در مورد ویزیت خود را اضافه کنید"
                     className="resize-none text-xs md:text-sm font-normal"
                     {...field}
                   />
@@ -473,10 +473,10 @@ export default function PatientDetailsForm({
 
           <div className="flex justify-end gap-4 pt-6">
             <Button type="button" variant="outline" className="border-border-2">
-              Cancel
+              انصراف
             </Button>
             <Button type="submit" className="text-text-caption-2">
-              Continue to Book
+              ادامه برای رزرو
             </Button>
           </div>
         </form>
