@@ -15,15 +15,19 @@ import Image from 'next/image'
 
 // Define navigation items
 const navigation = [
-  { name: 'Dashboard', href: '/admin/dashboard', icon: LineChart },
-  { name: 'Doctors', href: '/admin/doctors', icon: Stethoscope },
+  { name: 'Dashboard', href: '/dashboard/overview', icon: LineChart },
+  { name: 'Doctors', href: '/dashboard/doctors', icon: Stethoscope },
   {
     name: 'Appointment Actions',
-    href: '/admin/appointments',
+    href: '/dashboard/appointments',
     icon: CalendarCheck,
   },
-  { name: 'All Appointments', href: '/admin/appointments/all', icon: Calendar },
-  { name: 'Settings', href: '/admin/settings', icon: Settings },
+  {
+    name: 'All Appointments',
+    href: '/dashboard/appointments/all',
+    icon: Calendar,
+  },
+  { name: 'Settings', href: '/dashboard/settings', icon: Settings },
 ]
 
 export default function AdminSidebar() {
