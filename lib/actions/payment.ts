@@ -7,6 +7,7 @@ import prisma from '@/lib/prisma'
 // import { PaymentResult } from '../schemas'
 import { getCurrentUser } from '@/lib/auth-helpers'
 import { PaymentError } from '../errors'
+import { AppointmentStatus } from '../generated/prisma'
 // import { createHash } from 'crypto'
 
 // Types
@@ -374,6 +375,7 @@ export async function zarinpalPaymentApproval(
         // Update order to paid with transaction
         await updateOrderToPaidSecure({
           orderId,
+          appointmentId,
           paymentResult: {
             id: verification.refId.toString(),
             status: 'OK',
@@ -627,9 +629,11 @@ async function validateOrderIntegrity(
 // Updated updateOrderToPaidSecure function in payment1.ts
 export async function updateOrderToPaidSecure({
   orderId,
+  appointmentId,
   paymentResult,
 }: {
   orderId: string
+  appointmentId?: string
   paymentResult?: any
 }) {
   return await prisma.$transaction(async (tx) => {
@@ -688,8 +692,24 @@ export async function updateOrderToPaidSecure({
         },
       })
     }
+    const updatedAppointment = await prisma.appointment.update({
+      where: {
+        appointmentId: appointmentId,
+      },
+      data: {
+        paymentResult: {
+          id: paymentResult.id,
+          status: paymentResult.status,
+          email_address: paymentResult.email_address,
+          // pricePaid: pricePaidNumber,
+        },
+        paidAt: new Date(), // Set the payment timestamp to now
+        status: AppointmentStatus.BOOKING_CONFIRMED, // Update the status
+        reservationExpiresAt: null, // Clear the reservation expiry as it's now confirmed
+      },
+    })
 
-    return updatedOrder
+    return updatedAppointment
   })
 }
 

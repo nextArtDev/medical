@@ -242,6 +242,7 @@ export async function getAvailableDoctorSlots({
           gte: new Date(dayStartInAppTz),
           lte: new Date(dayEndInAppTz),
         },
+        // GET Situation where appointment is confirmed or payment pending or is booked
         status: {
           in: [
             AppointmentStatus.BOOKING_CONFIRMED,
@@ -281,6 +282,7 @@ export async function getAvailableDoctorSlots({
 
     if (takenSlotTimesUTC.size > 0) {
       availableSlots = availableSlots.filter(
+        // If takenSlotTimesUTC has the slot's startTimeUTC, it means it's booked. and we shouldn't taken it, and only what is not in the takenSlotUTC will be in availableSlots
         (slot) => !takenSlotTimesUTC.has(slot.startTimeUTC.toISOString())
       )
     }

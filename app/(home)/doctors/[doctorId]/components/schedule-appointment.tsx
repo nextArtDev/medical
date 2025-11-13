@@ -10,7 +10,6 @@ import {
   isAfter,
   format,
 } from 'date-fns-jalali'
-import { Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { TimeSlot } from '@/types/home'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -36,7 +35,7 @@ export default function AppointmentScheduler({
     fetchSlotsForDate,
   } = useAppointmentSlots(doctorId, userId)
 
-  const { mutate: reserveApointment, isPending } = useAppointmentReservation({
+  const { mutate: reserveAppointment, isPending } = useAppointmentReservation({
     userId,
     onConflict: () => {
       setSelectedSlot(null)
@@ -75,7 +74,7 @@ export default function AppointmentScheduler({
     }
     // Add your reservation logic here
 
-    reserveApointment({
+    reserveAppointment({
       doctorId,
       date: format(selectedDate, 'yyyy-MM-dd'), // Format date to YYYY-MM-DD
       startTime: selectedSlot.startTime,
@@ -96,16 +95,18 @@ export default function AppointmentScheduler({
   const handleMonthChange = (month: Date) => {
     setCurrentMonth(month)
     const toDate = addMonths(new Date(), 2)
-
     if (isAfter(startOfMonth(month), toDate)) {
       setDate(new Date())
       setSelectedSlot(null)
       setOutOfRangeMessage('This is too far in the future')
+      setDate(new Date())
     } else {
       setOutOfRangeMessage(null)
+      setSelectedSlot(null)
       // Don't automatically select a date when changing months
       // Let the user explicitly select a date
     }
+    fetchSlotsForDate()
   }
 
   const today = new Date()

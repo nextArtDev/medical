@@ -625,7 +625,7 @@ export async function processAppointmentBooking(
     }
   }
   const userId = session.id
-
+  // console.log({ data })
   // 2. Validate form data
   const validationResult = PatientDetailsFormSchema.safeParse(data)
   if (!validationResult.success) {

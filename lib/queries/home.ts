@@ -1669,11 +1669,12 @@ export async function getUserAppointments(params?: {
   }
 }
 
-export type AppoitmentWithRelations = Prisma.AppointmentGetPayload<{
+export type AppointmentWithRelations = Prisma.AppointmentGetPayload<{
   include: {
     doctor: {
       include: {
         doctorProfile: true
+        images: { select: { url: true }; take: 1 }
       }
     }
   }
@@ -1683,7 +1684,7 @@ export async function getAppointmentData({
   appointmentId,
 }: {
   appointmentId: string
-}): Promise<ApiResponse<AppoitmentWithRelations>> {
+}): Promise<ApiResponse<AppointmentWithRelations>> {
   // 1. Basic input validation
   if (!appointmentId) {
     return {

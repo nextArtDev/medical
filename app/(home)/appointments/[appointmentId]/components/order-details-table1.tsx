@@ -161,7 +161,7 @@ const OrderDetailsTable = ({ order }: OrderDetailsTableProps) => {
         </div>
 
         {/* Order Summary Sidebar */}
-        {/* <div>
+        <div>
           <OrderSummaryCard
             amount={+amount}
             isPending={isPending}
@@ -170,7 +170,7 @@ const OrderDetailsTable = ({ order }: OrderDetailsTableProps) => {
             orderId={id}
             paidAt={paidAt}
           />
-        </div> */}
+        </div>
       </div>
     </div>
   )

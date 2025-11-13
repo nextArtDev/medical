@@ -132,7 +132,9 @@ const someoneElseSchema = baseSchema.extend({
 })
 
 export const PatientDetailsFormSchema = z
+  // If patientType=myselfSchema ? myselfSchema : someoneElseSchema
   .discriminatedUnion('patientType', [myselfSchema, someoneElseSchema])
+  // adding custom checks on our total object
   .superRefine((data, ctx) => {
     // If 'useAlternatePhone' is checked, the 'phone' field becomes required and must be valid.
     if (data.useAlternatePhone) {

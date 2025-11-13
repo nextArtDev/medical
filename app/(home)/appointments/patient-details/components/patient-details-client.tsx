@@ -20,7 +20,8 @@ export default function PatientDetailsClient({
   const { doctorName, doctorSpecilaity, doctorImage, date, timeSlot } =
     initialAppointmentData
 
-  const formattedDate = date ? date : ''
+  // const formattedDate = date ? date: ''
+  const formattedDate = date ? format(date, 'd MMMM') : ''
   const formattedTime = timeSlot
     ? format(parseISO(`1970-01-01T${timeSlot}:00`), 'hh:mm a')
     : ''
