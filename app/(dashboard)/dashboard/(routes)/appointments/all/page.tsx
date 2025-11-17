@@ -8,7 +8,7 @@ import { redirect } from 'next/navigation'
 import { AdminSearchInput } from '../components/admin-search-input'
 import { AdminAppointment } from '../../../lib/types'
 import { getAdminAppointments } from '../../../lib/actions'
-import AppointmentsTable from '../components/appointments-table'
+import AllAppointmentsTable from '../components/all-appointments-table'
 
 interface SearchParams {
   search?: string
@@ -131,7 +131,7 @@ export default async function AdminAppointmentsPage({
 
       <Card className="p-0 rounded-lg border-0">
         <CardContent className="p-0 rounded-lg">
-          <AppointmentsTable
+          <AllAppointmentsTable
             appointments={appointments}
             totalPages={totalPages}
             currentPage={currentPage}
