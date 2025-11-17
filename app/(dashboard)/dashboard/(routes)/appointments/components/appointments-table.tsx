@@ -1,7 +1,7 @@
-"use client";
+'use client'
 
-import React, { useTransition, useRef, useState } from "react";
-import { useRouter, useSearchParams, usePathname } from "next/navigation";
+import React, { useTransition, useRef, useState } from 'react'
+import { useRouter, useSearchParams, usePathname } from 'next/navigation'
 import {
   Table,
   TableBody,
@@ -9,7 +9,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
+} from '@/components/ui/table'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,36 +19,43 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog"; // Import AlertDialog components
+} from '@/components/ui/alert-dialog' // Import AlertDialog components
 
 // --- Icons ---
-import { Loader2 } from "lucide-react";
-import { toast } from "react-hot-toast";
+import { Loader2 } from 'lucide-react'
 
-// --- Actions and Types ---
-import { AdminAppointment } from "@/types";
+// import {
+//   markAdminAppointmentNoShow,
+//   markAdminAppointmentCompleted,
+//   markCashAppointmentAsPaid,
+//   cancelAdminAppointment,
+// } from "@/lib/actions/admin.actions";
+// import { cancelCashAppointment } from "@/lib/actions/shared.actions";
+// import AppointmentStatusBadge from "@/components/molecules/admin/appointment-status-badge";
+// import PaginationControls from "@/components/molecules/pagination-controls";
+import { AppointmentStatus } from '@/lib/generated/prisma'
+import { Button } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
+import { cancelCashAppointment, ServerActionResponse } from '@/lib/actions'
+import { toast } from 'sonner'
 import {
-  markAdminAppointmentNoShow,
-  markAdminAppointmentCompleted,
-  markCashAppointmentAsPaid,
   cancelAdminAppointment,
-} from "@/lib/actions/admin.actions";
-import { cancelCashAppointment } from "@/lib/actions/shared.actions";
-import { AppointmentStatus } from "@/lib/generated/prisma";
-import AppointmentStatusBadge from "@/components/molecules/admin/appointment-status-badge";
-import PaginationControls from "@/components/molecules/pagination-controls";
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
-import { ServerActionResponse } from "@/types";
+  markAdminAppointmentCompleted,
+  markAdminAppointmentNoShow,
+  markCashAppointmentAsPaid,
+} from '../../../lib/actions'
+import { AdminAppointment } from '../../../lib/types'
+import PaginationControls from '@/components/shared/pagination-controls'
+import AppointmentStatusBadge from './appointment-status-badge'
 
 // --- Props Interface ---
 interface AppointmentsTableProps {
-  appointments: AdminAppointment[];
-  totalPages: number;
-  currentPage: number;
-  itemsPerPage: number;
-  totalAppointments: number;
-  searchQuery: string;
+  appointments: AdminAppointment[]
+  totalPages: number
+  currentPage: number
+  itemsPerPage: number
+  totalAppointments: number
+  searchQuery: string
 }
 
 // --- Main Table Component ---
@@ -58,62 +65,62 @@ export default function AppointmentsTable({
   currentPage,
   searchQuery,
 }: AppointmentsTableProps) {
-  const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const [isPending, startTransition] = useTransition();
-  const activeToastId = useRef<string | null>(null);
+  const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
+  const [isPending, startTransition] = useTransition()
+  const activeToastId = useRef<string | null>(null)
 
   // --- State for AlertDialog ---
-  const [isAlertOpen, setIsAlertOpen] = useState(false);
+  const [isAlertOpen, setIsAlertOpen] = useState(false)
   const [alertDetails, setAlertDetails] = useState<{
-    title: string;
-    description: string;
-    confirmText: string;
-    onConfirm: () => void;
-    isDestructive?: boolean;
+    title: string
+    description: string
+    confirmText: string
+    onConfirm: () => void
+    isDestructive?: boolean
   }>({
-    title: "",
-    description: "",
-    confirmText: "Confirm",
+    title: '',
+    description: '',
+    confirmText: 'Confirm',
     onConfirm: () => {},
     isDestructive: false,
-  });
+  })
 
   // Helper to execute the action and show toasts
   const executeTableAction = (
     actionFn: () => Promise<ServerActionResponse>, // The actual server action call
-    actionPendingText: string = "Processing...",
-    actionSuccessText: string = "Action successful.",
-    actionErrorText: string = "Action failed."
+    actionPendingText: string = 'Processing...',
+    actionSuccessText: string = 'Action successful.',
+    actionErrorText: string = 'Action failed.'
   ) => {
     startTransition(async () => {
-      if (activeToastId.current) toast.dismiss(activeToastId.current);
-      activeToastId.current = toast.loading(actionPendingText);
+      if (activeToastId.current) toast.dismiss(activeToastId.current)
+      activeToastId.current = toast.loading(actionPendingText)
 
       try {
-        const result = await actionFn(); // Call the passed server action
+        const result = await actionFn() // Call the passed server action
         if (result.success) {
           toast.success(result.message || actionSuccessText, {
             id: activeToastId.current,
-          });
+          })
         } else {
           toast.error(result.message || actionErrorText, {
             id: activeToastId.current,
-          });
+          })
           console.error(
-            "Action failed:",
+            'Action failed:',
             result.error,
-            "Type:",
+            'Type:',
             result.errorType
-          );
+          )
         }
       } catch (error) {
-        toast.error(actionErrorText, { id: activeToastId.current });
-        console.error("Error executing action:", error);
+        toast.error(actionErrorText, { id: activeToastId.current })
+        console.error('Error executing action:', error)
       }
-    });
-  };
+    })
+  }
 
   const openConfirmationDialog = (
     title: string,
@@ -128,93 +135,93 @@ export default function AppointmentsTable({
       confirmText,
       onConfirm: onConfirmAction,
       isDestructive,
-    });
-    setIsAlertOpen(true);
-  };
+    })
+    setIsAlertOpen(true)
+  }
 
   const handleCancel = (id: string) => {
     openConfirmationDialog(
-      "Confirm Cancellation",
-      "Are you sure you want to cancel this appointment? This action cannot be undone.",
-      "Yes, Cancel Appointment",
+      'Confirm Cancellation',
+      'Are you sure you want to cancel this appointment? This action cannot be undone.',
+      'Yes, Cancel Appointment',
       () =>
         executeTableAction(
           () => cancelAdminAppointment(id),
-          "Cancelling appointment...",
-          "Appointment cancelled successfully.",
-          "Failed to cancel appointment."
+          'Cancelling appointment...',
+          'Appointment cancelled successfully.',
+          'Failed to cancel appointment.'
         ),
       true // Destructive action
-    );
-  };
+    )
+  }
 
   const handleCancelCash = (id: string) => {
     openConfirmationDialog(
-      "Confirm Cancellation",
+      'Confirm Cancellation',
       "Are you sure you want to cancel this 'Pay at Counter' appointment? This action cannot be undone.",
-      "Yes, Cancel Appointment",
+      'Yes, Cancel Appointment',
       () =>
         executeTableAction(
           () => cancelCashAppointment(id),
-          "Cancelling appointment...",
-          "Appointment cancelled successfully.",
-          "Failed to cancel appointment."
+          'Cancelling appointment...',
+          'Appointment cancelled successfully.',
+          'Failed to cancel appointment.'
         ),
       true // Destructive action
-    );
-  };
+    )
+  }
 
   const handleMarkPaid = (id: string) => {
     openConfirmationDialog(
-      "Confirm Payment",
-      "Are you sure you want to mark this cash appointment as paid and confirmed?",
-      "Yes, Mark as Paid",
+      'Confirm Payment',
+      'Are you sure you want to mark this cash appointment as paid and confirmed?',
+      'Yes, Mark as Paid',
       () =>
         executeTableAction(
           () => markCashAppointmentAsPaid(id),
-          "Marking as paid...",
-          "Appointment marked as paid successfully.",
-          "Failed to mark appointment as paid."
+          'Marking as paid...',
+          'Appointment marked as paid successfully.',
+          'Failed to mark appointment as paid.'
         )
-    );
-  };
+    )
+  }
 
   const handleMarkNoShow = (id: string) => {
     openConfirmationDialog(
-      "Confirm No Show",
-      "Are you sure you want to mark this appointment as No Show?",
-      "Yes, Mark as No Show",
+      'Confirm No Show',
+      'Are you sure you want to mark this appointment as No Show?',
+      'Yes, Mark as No Show',
       () =>
         executeTableAction(
           () => markAdminAppointmentNoShow(id),
-          "Marking as No Show...",
-          "Appointment marked as No Show.",
-          "Failed to mark as No Show."
+          'Marking as No Show...',
+          'Appointment marked as No Show.',
+          'Failed to mark as No Show.'
         ),
       true
-    );
-  };
+    )
+  }
 
   const handleMarkCompleted = (id: string) => {
     openConfirmationDialog(
-      "Confirm Completion",
-      "Are you sure you want to mark this appointment as Completed?",
-      "Yes, Mark as Completed",
+      'Confirm Completion',
+      'Are you sure you want to mark this appointment as Completed?',
+      'Yes, Mark as Completed',
       () =>
         executeTableAction(
           () => markAdminAppointmentCompleted(id),
-          "Marking as Completed...",
-          "Appointment marked as Completed.",
-          "Failed to mark as Completed."
+          'Marking as Completed...',
+          'Appointment marked as Completed.',
+          'Failed to mark as Completed.'
         )
-    );
-  };
+    )
+  }
 
   const handlePageChange = (page: number) => {
-    const current = new URLSearchParams(Array.from(searchParams.entries()));
-    current.set("page", page.toString());
-    router.push(`${pathname}?${current.toString()}`);
-  };
+    const current = new URLSearchParams(Array.from(searchParams.entries()))
+    current.set('page', page.toString())
+    router.push(`${pathname}?${current.toString()}`)
+  }
 
   return (
     <>
@@ -260,7 +267,7 @@ export default function AppointmentsTable({
                 >
                   {searchQuery
                     ? `No appointments found matching "${searchQuery}".`
-                    : "No appointments found."}
+                    : 'No appointments found.'}
                 </TableCell>
               </TableRow>
             ) : (
@@ -281,7 +288,7 @@ export default function AppointmentsTable({
                   <TableCell className="px-4 py-3 body-small text-text-body-subtle ">
                     {appointment.phoneNumber ||
                       appointment.userPhoneNumber ||
-                      "N/A"}
+                      'N/A'}
                   </TableCell>
                   <TableCell className="px-4 py-3 body-small text-text-body-subtle ">
                     {appointment.bookedByName}
@@ -407,13 +414,13 @@ export default function AppointmentsTable({
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={() => {
-                alertDetails.onConfirm();
-                setIsAlertOpen(false);
+                alertDetails.onConfirm()
+                setIsAlertOpen(false)
               }}
               disabled={isPending}
               className={cn(
                 alertDetails.isDestructive &&
-                  "bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  'bg-destructive text-destructive-foreground hover:bg-destructive/90'
               )}
             >
               {isPending ? (
@@ -429,5 +436,5 @@ export default function AppointmentsTable({
         </AlertDialogContent>
       </AlertDialog>
     </>
-  );
+  )
 }

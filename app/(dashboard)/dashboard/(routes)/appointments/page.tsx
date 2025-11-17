@@ -7,6 +7,9 @@ import { DateRange } from 'react-day-picker'
 import { parseISO, isValid, format, startOfMonth, endOfMonth } from 'date-fns'
 import { redirect } from 'next/navigation'
 import { AdminSearchInput } from './components/admin-search-input'
+import { getAdminAppointments } from '../../lib/actions'
+import { AdminAppointment } from '../../lib/types'
+import AppointmentsTable from './components/appointments-table'
 
 interface SearchParams {
   search?: string
