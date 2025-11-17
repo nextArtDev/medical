@@ -149,3 +149,8 @@ export type SelectedAppointmentInfo = {
 }
 
 export interface DepartmentData extends Department {}
+
+export interface AdminDoctorDataSimple {
+  id: string
+  name: string | null
+}
