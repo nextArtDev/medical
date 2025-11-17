@@ -6,6 +6,9 @@ import { DateRange } from 'react-day-picker'
 import { parseISO, isValid, format, startOfMonth, endOfMonth } from 'date-fns'
 import { redirect } from 'next/navigation'
 import { AdminSearchInput } from '../components/admin-search-input'
+import { AdminAppointment } from '../../../lib/types'
+import { getAdminAppointments } from '../../../lib/actions'
+import AppointmentsTable from '../components/appointments-table'
 
 interface SearchParams {
   search?: string
@@ -59,7 +62,7 @@ export default async function AdminAppointmentsPage({
       paramsToSet.set('from', format(defaultDateRange.from, 'yyyy-MM-dd'))
     if (defaultDateRange.to)
       paramsToSet.set('to', format(defaultDateRange.to, 'yyyy-MM-dd'))
-    redirect(`/admin/appointments?${paramsToSet.toString()}`) // Redirect preserves path
+    redirect(`/dashboard/appointments?${paramsToSet.toString()}`) // Redirect preserves path
   }
 
   const searchQuery = searchParams?.search || ''

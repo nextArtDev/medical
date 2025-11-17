@@ -298,7 +298,7 @@ export async function markAdminAppointmentNoShow(
     })
 
     // Revalidate paths
-    revalidatePath('/admin/appointments')
+    revalidatePath('/dashboard/appointments')
     revalidatePath(`/user/profile`) // Revalidate patient's profile too
 
     return { success: true, message: 'Appointment marked as No Show.' }
@@ -367,7 +367,7 @@ export async function markAdminAppointmentCompleted(
     })
 
     // Revalidate paths
-    revalidatePath('/admin/appointments')
+    revalidatePath('/dashboard/appointments')
     revalidatePath(`/user/profile`) // Revalidate patient's profile too
 
     return { success: true, message: 'Appointment marked as Completed.' }
@@ -463,8 +463,8 @@ export async function markCashAppointmentAsPaid(
       })
 
       // 5. Revalidate the path
-      revalidatePath('/admin/appointments')
-      revalidatePath('/admin/dashboard')
+      revalidatePath('/dashboard/appointments')
+      revalidatePath('/dashboard/dashboard')
 
       return {
         success: true,
@@ -559,7 +559,7 @@ export async function cancelAdminAppointment(
       }
 
       // Revalidate Paths
-      revalidatePath('/admin/appointments')
+      revalidatePath('/dashboard/appointments')
       revalidatePath(`/user/profile`)
 
       return { success: true, message: 'Appointment cancelled successfully.' }
@@ -811,7 +811,7 @@ export async function addAdminUser(
       },
     })
 
-    revalidatePath('/admin/settings') // Revalidate the settings page
+    revalidatePath('/dashboard/settings') // Revalidate the settings page
 
     return { success: true, message: 'Admin user created successfully.' }
   } catch (error) {
@@ -907,7 +907,7 @@ export async function deleteAdminUser(
       where: { id: userId },
     })
 
-    revalidatePath('/admin/settings')
+    revalidatePath('/dashboard/settings')
     return { success: true, message: 'Admin user deleted successfully.' }
   } catch (error) {
     console.error(`Error deleting admin user ${userId}:`, error)
@@ -984,7 +984,7 @@ export async function updateAdminUser(
     })
 
     // Revalidate the path to refresh the user list
-    revalidatePath('/admin/settings')
+    revalidatePath('/dashboard/settings')
 
     return { success: true, message: 'Admin user updated successfully.' }
   } catch (error) {
@@ -1096,7 +1096,7 @@ export async function addDoctor(
       })
     })
 
-    revalidatePath('/admin/doctors')
+    revalidatePath('/dashboard/doctors')
 
     return { success: true, message: 'Doctor added successfully.' }
   } catch (error) {
@@ -1268,7 +1268,7 @@ export async function updateDoctor(
       // }
     }
 
-    revalidatePath('/admin/doctors')
+    revalidatePath('/dashboard/doctors')
 
     return { success: true, message: 'Doctor updated successfully.' }
   } catch (error) {
@@ -1448,7 +1448,7 @@ export async function deleteDoctor(
       // }
     }
 
-    revalidatePath('/admin/doctors')
+    revalidatePath('/dashboard/doctors')
     return { success: true, message: 'Doctor deactivated successfully.' }
   } catch (error) {
     const techError =
@@ -1732,7 +1732,7 @@ export async function updateDoctorLeave(
     }) // End transaction
 
     // Revalidate relevant paths after successful transaction
-    revalidatePath(`/admin/doctors/${doctorId}/manage`)
+    revalidatePath(`/dashboard/doctors/${doctorId}/manage`)
     revalidatePath(`/doctors/${doctorId}`)
 
     return { success: true, message: 'Leave updated successfully.' }

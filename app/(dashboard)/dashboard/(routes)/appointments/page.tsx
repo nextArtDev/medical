@@ -63,7 +63,7 @@ export default async function AdminAppointmentsPage({
       paramsToSet.set('from', format(defaultDateRange.from, 'yyyy-MM-dd'))
     if (defaultDateRange.to)
       paramsToSet.set('to', format(defaultDateRange.to, 'yyyy-MM-dd'))
-    redirect(`/admin/appointments?${paramsToSet.toString()}`) // Redirect preserves path
+    redirect(`/dashboard/appointments?${paramsToSet.toString()}`) // Redirect preserves path
   }
 
   const searchQuery = searchParams?.search || ''

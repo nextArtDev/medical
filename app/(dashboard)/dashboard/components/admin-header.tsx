@@ -93,7 +93,7 @@ export default function AdminHeader() {
   }
 
   const adminName =
-    status === 'loading' ? 'Loading...' : session?.user?.name ?? 'Admin'
+    status === 'loading' ? 'Loading...' : session?.user?.name ?? 'admin'
 
   return (
     <header className="h-16 border-b border-border-2 bg-background flex items-center justify-between px-6 flex-shrink-0">

@@ -113,7 +113,7 @@ export default function AppointmentScheduler({
   const toDate = addMonths(today, 2)
 
   const getButtonText = () => {
-    if (userRole === 'ADMIN') return 'Admins cannot Book'
+    if (userRole === 'admin') return 'Admins cannot Book'
     return 'Continue to Next Step'
   }
 
@@ -200,7 +200,7 @@ export default function AppointmentScheduler({
         <Button
           onClick={handleReservation}
           disabled={
-            !selectedSlot || isLoading || isPending || userRole === 'ADMIN'
+            !selectedSlot || isLoading || isPending || userRole === 'admin'
           }
           className="w-full py-6 body-semibold text-text-caption-2 mb-20"
         >
