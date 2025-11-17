@@ -1,4 +1,9 @@
-import { AppointmentStatus, LeaveType, Role } from '@/lib/generated/prisma'
+import {
+  AppointmentStatus,
+  Department,
+  LeaveType,
+  Role,
+} from '@/lib/generated/prisma'
 import z from 'zod'
 import {
   addAdminFormSchema,
@@ -142,3 +147,5 @@ export type SelectedAppointmentInfo = {
     name: string | null
   } | null
 }
+
+export interface DepartmentData extends Department {}

@@ -3,7 +3,8 @@ import prisma from '@/lib/prisma'
 import { getAppTimeZone } from '@/lib/utils'
 import { endOfDay, getHours, parseISO, startOfDay } from 'date-fns-jalali'
 import { toZonedTime } from 'date-fns-tz'
-import { SelectedAppointmentInfo } from './types'
+import { DepartmentData, SelectedAppointmentInfo } from './types'
+import { ServerActionResponse } from '@/lib/actions'
 
 export async function getDoctorAppointmentsForDateInternal(
   doctorId: string,
@@ -72,4 +73,43 @@ export async function getDoctorAppointmentsForDateInternal(
   }
 
   return conflictingAppointments
+}
+
+interface GetDepartmentData {
+  departments: DepartmentData[]
+}
+
+export async function getDepartments(): Promise<
+  ServerActionResponse<GetDepartmentData>
+> {
+  try {
+    // Attempt to retrieve all departments from the database
+    // The results are ordered by the 'createdAt' field in ascending order
+    const departments = await prisma.department.findMany({
+      orderBy: {
+        createdAt: 'asc',
+      },
+    })
+
+    // If the query is successful, return a success response with the data
+    return {
+      success: true,
+      data: { departments },
+      message: 'Departments fetched successfully.',
+    }
+  } catch (error) {
+    // Log the error to the console for debugging purposes
+    console.error('Error fetching departments:', error)
+
+    // If an error occurs, return a failure response
+    return {
+      success: false,
+      message: 'failed to fetch departments',
+      error:
+        error instanceof Error
+          ? error.message
+          : 'Unknown error fetching departments',
+      errorType: 'SERVER_ERROR',
+    }
+  }
 }
