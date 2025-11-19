@@ -1,5 +1,5 @@
 import AdminSidebar from './components/admin-sidebar'
-import AdminHeader from './components/admin-header'
+import AdminHeader from './(routes)/settings/components/admin-header'
 import { requireAdmin } from '@/lib/auth-guard'
 
 export default async function AdminLayout({

@@ -15,12 +15,12 @@ import { useState } from 'react'
 export function NavbarDemo() {
   const navItems = [
     {
-      name: 'Features',
-      link: '#features',
+      name: 'Home',
+      link: '/',
     },
     {
-      name: 'Pricing',
-      link: '#pricing',
+      name: 'Dashboard',
+      link: '/dashboard',
     },
     {
       name: 'Contact',
@@ -38,7 +38,9 @@ export function NavbarDemo() {
           <NavbarLogo />
           <NavItems items={navItems} />
           <div className="flex items-center gap-4">
-            <NavbarButton variant="secondary">Login</NavbarButton>
+            <NavbarButton href="/sign-in" variant="secondary">
+              Login
+            </NavbarButton>
             <NavbarButton variant="primary">Book a call</NavbarButton>
           </div>
         </NavBody>

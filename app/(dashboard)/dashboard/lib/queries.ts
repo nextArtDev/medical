@@ -1,4 +1,9 @@
-import { AppointmentStatus, LeaveType, Prisma } from '@/lib/generated/prisma'
+import {
+  AppointmentStatus,
+  BannerImage,
+  LeaveType,
+  Prisma,
+} from '@/lib/generated/prisma'
 import prisma from '@/lib/prisma'
 import { getAppTimeZone } from '@/lib/utils'
 import { endOfDay, getHours, parseISO, startOfDay } from 'date-fns-jalali'
@@ -109,6 +114,47 @@ export async function getDepartments(): Promise<
         error instanceof Error
           ? error.message
           : 'Unknown error fetching departments',
+      errorType: 'SERVER_ERROR',
+    }
+  }
+}
+
+interface BannerResponse {
+  banners: BannerImage[]
+}
+
+export async function getBanners(): Promise<
+  ServerActionResponse<BannerResponse>
+> {
+  try {
+    // Fetch all records from the BannerImage table.
+    // The 'orderBy' clause ensures that the banners are returned in the sequence
+    // specified by the 'order' field, from lowest to highest.
+    const banners = await prisma.bannerImage.findMany({
+      orderBy: {
+        order: 'asc',
+      },
+    })
+
+    // Return a standardized success response object containing the fetched data.
+    return {
+      success: true,
+      data: { banners },
+      message: 'Banner images fetched successfully.',
+    }
+  } catch (error) {
+    // Log the actual error to the server console for debugging purposes.
+    console.error('Error fetching banners:', error)
+
+    // Determine the error message to return to the client.
+    const errorMessage =
+      error instanceof Error ? error.message : 'An unexpected error occurred.'
+
+    // Return a standardized error response object.
+    return {
+      success: false,
+      message: 'Could not fetch banner images. Please try again later.',
+      error: errorMessage,
       errorType: 'SERVER_ERROR',
     }
   }
