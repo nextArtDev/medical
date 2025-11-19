@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation'
-import { getAdminDoctorById, getDoctorLeaves } from '../../../lib/actions'
-import { InitialLeave } from '../../../lib/types'
-import ManageLeaveClient from '../components/manage-leave-client'
+import { getAdminDoctorById, getDoctorLeaves } from '../../../../lib/actions'
+import { InitialLeave } from '../../../../lib/types'
+import ManageLeaveClient from '../../components/manage-leave-client'
 
 export default async function ManageDoctorLeavePage({
   params,

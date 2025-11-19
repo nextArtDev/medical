@@ -3,8 +3,10 @@
 import { useState, useEffect, useMemo } from 'react'
 import { format, parseISO } from 'date-fns'
 import { LeaveType, AppointmentStatus } from '@/lib/generated/prisma'
-import { getDoctorAppointmentsForDate } from '@/lib/actions/admin.actions'
+
 import { LeaveEntry } from './useLeaveState'
+import { getDoctorAppointmentsForDate } from '@/app/(dashboard)/dashboard/lib/actions'
+import { toast } from 'sonner'
 
 // Types needed by this hook
 export interface AppointmentDetail {

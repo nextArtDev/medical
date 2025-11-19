@@ -71,7 +71,7 @@ export default function DoctorsTable({ doctors, onEdit }: DoctorsTableProps) {
   )
 
   const handleManage = (doctorId: string) => {
-    router.push(`/admin/doctors/${doctorId}/manage`) // Navigate to the manage page
+    router.push(`/dashboard/doctors/${doctorId}/manage`) // Navigate to the manage page
   }
 
   const handleEdit = (doctor: AdminDoctorData) => {
