@@ -19,6 +19,8 @@ import { LeaveEditor } from './leave-editor'
 import { LeaveLegend } from './leave-legend'
 import { LeaveCalendar } from './leave-calendar'
 import { ConflictDisplay } from './conflict-display'
+import DoctorScheduleEditor from './doctor-scheduale-editor'
+import ManageDoctorScheduleClient from './manage-doctor-schedual-client'
 
 interface ManageLeaveClientProps {
   doctor: DoctorData
@@ -112,6 +114,7 @@ export default function ManageLeaveClient({
               onSelect={handleDateSelect}
             />
             <LeaveLegend />
+            <ManageDoctorScheduleClient doctor={doctor} initialSchedule={[]} />
           </div>
 
           {isConflictPresent && (

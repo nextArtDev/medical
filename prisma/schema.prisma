@@ -42,15 +42,17 @@ model User {
   banReason  String?   @db.Text
   banExpires DateTime?
 
-  doctorProfile       DoctorProfile?
-  doctorLeaves        DoctorLeave[]
-  doctorAppointments  Appointment[]       @relation("DoctorAppointments")
-  userAppointments    Appointment[]       @relation("UserAppointments")
-  doctorTestimonials  DoctorTestimonial[] @relation("DoctorTestimonials")
-  patientTestimonials DoctorTestimonial[] @relation("PatientTestimonials")
-  paymentDetails      PaymentDetails[]
-  orders              Order[]
-  images              Image[]
+  doctorProfile DoctorProfile?
+  doctorLeaves  DoctorLeave[]
+
+  doctorAppointments    Appointment[]          @relation("DoctorAppointments")
+  userAppointments      Appointment[]          @relation("UserAppointments")
+  doctorTestimonials    DoctorTestimonial[]    @relation("DoctorTestimonials")
+  patientTestimonials   DoctorTestimonial[]    @relation("PatientTestimonials")
+  paymentDetails        PaymentDetails[]
+  orders                Order[]
+  images                Image[]
+  doctorWeeklySchedules DoctorWeeklySchedule[]
 
   @@unique([email])
   @@map("user")
@@ -205,6 +207,25 @@ model WorkingDay {
   isWorkingDay Boolean @default(true)
 
   @@map("working_days")
+}
+
+model DoctorWeeklySchedule {
+  id        String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  doctorId  String
+  dayOfWeek Int // Sunday=0, Monday=1, ...
+  startTime String? // Format: "HH:MM"
+  endTime   String? // Format: "HH:MM"
+  isActive  Boolean @default(true) // Whether this doctor works on this day
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // --- Relationships ---
+  doctor User @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+
+  // --- Constraints ---
+  @@unique([doctorId, dayOfWeek])
+  @@map("doctor_weekly_schedules")
 }
 
 model Appointment {

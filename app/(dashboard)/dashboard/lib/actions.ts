@@ -2262,3 +2262,120 @@ export async function addDepartment(
     }
   }
 }
+
+// Doctor Personal Schedule
+
+export interface DoctorScheduleData {
+  dayOfWeek: number
+  isWorking: boolean
+  startTime: string | null
+  endTime: string | null
+}
+
+export async function getDoctorSchedule(doctorId: string) {
+  try {
+    const schedules = await prisma.doctorWeeklySchedule.findMany({
+      where: { doctorId },
+      orderBy: { dayOfWeek: 'asc' },
+    })
+
+    // If no schedules exist, return default schedule based on app settings
+    if (schedules.length === 0) {
+      const appSettings = await prisma.appSettings.findUnique({
+        where: { id: 'global' },
+      })
+
+      const defaultSchedule = [1, 2, 3, 4, 5, 6, 0].map((day) => ({
+        dayOfWeek: day,
+        isWorking: day !== 0, // Sunday off by default
+        startTime: appSettings?.startTime || '09:00',
+        endTime: appSettings?.endTime || '17:00',
+      }))
+
+      return {
+        success: true,
+        data: defaultSchedule,
+      }
+    }
+
+    return {
+      success: true,
+      data: schedules.map((s) => ({
+        dayOfWeek: s.dayOfWeek,
+        isActive: s.isActive,
+        startTime: s.startTime,
+        endTime: s.endTime,
+      })),
+    }
+  } catch (error) {
+    console.error('Error fetching doctor schedule:', error)
+    return {
+      success: false,
+      error: 'Failed to fetch doctor schedule',
+    }
+  }
+}
+
+export async function updateDoctorSchedule(
+  doctorId: string,
+  schedules: DoctorScheduleData[]
+) {
+  try {
+    // Validate times
+    for (const schedule of schedules) {
+      if (schedule.isWorking) {
+        if (!schedule.startTime || !schedule.endTime) {
+          return {
+            success: false,
+            message: 'Start and end times are required for working days',
+          }
+        }
+
+        // Validate time format and logic
+        const start = schedule.startTime.split(':').map(Number)
+        const end = schedule.endTime.split(':').map(Number)
+
+        if (start[0] > end[0] || (start[0] === end[0] && start[1] >= end[1])) {
+          return {
+            success: false,
+            message: 'End time must be after start time',
+          }
+        }
+      }
+    }
+
+    // Use transaction to update all schedules atomically
+    await prisma.$transaction(async (tx) => {
+      // Delete existing schedules
+      await tx.doctorWeeklySchedule.deleteMany({
+        where: { doctorId },
+      })
+
+      // Create new schedules
+      await tx.doctorWeeklySchedule.createMany({
+        data: schedules.map((s) => ({
+          doctorId,
+
+          dayOfWeek: s.dayOfWeek,
+          isActive: s.isWorking,
+          startTime: s.isWorking ? s.startTime : '',
+          endTime: s.isWorking ? s.endTime : '',
+        })),
+      })
+    })
+
+    revalidatePath('/admin/doctors')
+    revalidatePath(`/admin/doctors/${doctorId}`)
+
+    return {
+      success: true,
+      message: 'Doctor schedule updated successfully',
+    }
+  } catch (error) {
+    console.error('Error updating doctor schedule:', error)
+    return {
+      success: false,
+      message: 'Failed to update doctor schedule',
+    }
+  }
+}
