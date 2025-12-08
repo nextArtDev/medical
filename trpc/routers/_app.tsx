@@ -1,6 +1,8 @@
 import { z } from 'zod'
 import { baseProcedure, createTRPCRouter } from '../init'
+import { doctorsRouter } from '@/lib/trpc/doctors/server/routers'
 export const appRouter = createTRPCRouter({
+  doctorsRouter: doctorsRouter,
   hello: baseProcedure
     .input(
       z.object({
