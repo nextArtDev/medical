@@ -2358,8 +2358,8 @@ export async function updateDoctorSchedule(
 
           dayOfWeek: s.dayOfWeek,
           isActive: s.isWorking,
-          startTime: s.isWorking ? s.startTime : '',
-          endTime: s.isWorking ? s.endTime : '',
+          startTime: s.isWorking ? s.startTime ?? '' : '',
+          endTime: s.isWorking ? s.endTime ?? '' : '',
         })),
       })
     })
