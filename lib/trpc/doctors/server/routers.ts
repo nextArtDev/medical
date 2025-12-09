@@ -153,7 +153,7 @@ export const doctorsRouter = createTRPCRouter({
       const specialtyCounts = new Map<string, number>()
 
       doctors.forEach((doctor) => {
-        // Count brands
+        // Count specializations - only once per doctor
         if (doctor.specializations) {
           doctor.specializations.forEach((specialization) => {
             if (specialization) {
@@ -169,35 +169,6 @@ export const doctorsRouter = createTRPCRouter({
             }
           })
         }
-
-        // Count colors and sizes from variants
-        doctor.specializations.forEach((specialization) => {
-          // Colors
-          if (specialization) {
-            const existing = specializationCount.get(specialization)
-            if (existing) {
-              existing.count++
-            } else {
-              specializationCount.set(specialization, {
-                name: specialization,
-                count: 1,
-              })
-            }
-          }
-
-          // Sizes
-          if (specialization) {
-            const existing = specializationCount.get(specialization)
-            if (existing) {
-              existing.count++
-            } else {
-              specializationCount.set(specialization, {
-                name: specialization,
-                count: 1,
-              })
-            }
-          }
-        })
       })
 
       return {

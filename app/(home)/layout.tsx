@@ -1,5 +1,6 @@
 import { NavbarDemo } from '@/components/home/navbar'
 import QueryProviders from '@/components/shared/tanstack-provider'
+import { TRPCReactProvider } from '@/trpc/client'
 import type { Metadata } from 'next'
 import { ViewTransitions } from 'next-view-transitions'
 import { NuqsAdapter } from 'nuqs/adapters/next/app'
@@ -17,12 +18,14 @@ export default function RootLayout({
   return (
     <section className="relative w-full h-full ">
       <NuqsAdapter>
-        <QueryProviders>
-          <ViewTransitions>
-            <NavbarDemo />
-            {children}
-          </ViewTransitions>
-        </QueryProviders>
+        <TRPCReactProvider>
+          <QueryProviders>
+            <ViewTransitions>
+              <NavbarDemo />
+              {children}
+            </ViewTransitions>
+          </QueryProviders>
+        </TRPCReactProvider>
       </NuqsAdapter>
     </section>
   )

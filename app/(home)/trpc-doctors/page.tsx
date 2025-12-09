@@ -8,6 +8,8 @@ import { doctorsParamsLoader } from '@/lib/trpc/doctors/server/params-loader'
 import { prefetchDoctors } from '@/lib/trpc/doctors/server/prefetch'
 import DoctorCarousel from '@/components/home/doctor-card/doctor-carousel'
 import DoctorGrid from './components/doctor-grid'
+import { DoctorFilters } from './components/doctor-filters'
+import { DoctorListView } from './components/doctor-list-view'
 
 type Props = {
   searchParams: Promise<SearchParams>
@@ -16,7 +18,7 @@ type Props = {
 const Page = async ({ searchParams }: Props) => {
   const queryClient = getQueryClient()
   const doctors = await queryClient.fetchQuery(
-    trpc.doctorsRouter.getInfiniteMany.queryOptions({})
+    trpc.doctorsRouter.getFilterOptions.queryOptions({})
   )
   const params = await doctorsParamsLoader(searchParams)
   prefetchDoctors({ ...params })
@@ -30,7 +32,14 @@ const Page = async ({ searchParams }: Props) => {
 
   return (
     <div className="p-2 mx-auto flex flex-col w-full h-full gap-4  ">
-      <DoctorGrid doctors={doctors.items} />
+      <HydrateClient>
+        <ErrorBoundary fallback={null}>
+          <Suspense fallback={null}>
+            <DoctorListView doctors={doctors} />
+          </Suspense>
+        </ErrorBoundary>
+      </HydrateClient>
+      <DoctorFilters />
       {/* <DoctorCarousel
         items={doctors.items.map((doctor) => {
           return {

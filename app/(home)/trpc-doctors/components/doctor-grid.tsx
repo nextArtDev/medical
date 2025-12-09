@@ -2,11 +2,23 @@ import { Suspense } from 'react'
 
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
-import { DoctorProfile, Image, User } from '@/lib/generated/prisma'
 import DoctorCard from './doctor-card'
 
+// More flexible type that works with both Prisma types and serialized tRPC responses
+interface Doctor {
+  profileId: string
+  specialty: string
+  specializations: string[]
+  doctor: {
+    id: string
+    name: string | null
+    images?: { url: string }[]
+  }
+  images?: { url: string }[]
+}
+
 interface DoctorGridProps {
-  doctors: (DoctorProfile & { doctor: User } & { images: Image[] })[]
+  doctors: Doctor[]
   loading?: boolean
   isInSearchPage?: boolean
 }
@@ -50,16 +62,20 @@ export default function DoctorGrid({
 
   return (
     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-0.5">
-      {doctors.map((doctor) => (
-        <Suspense key={doctor.doctor.id} fallback={<DoctorCardSkeleton />}>
-          <DoctorCard
-            doctorImages={doctor?.images?.map((img) => img.url) || []}
-            doctorName={doctor.doctor.name || ''}
-            doctorSpecializations={doctor.specializations || []}
-            doctorSlug={doctor.doctor.id || ''}
-          />
-        </Suspense>
-      ))}
+      {doctors.map((doctor) => {
+        // Handle both nested (tRPC) and flat image structures
+        const images = doctor.doctor.images || doctor.images || []
+        return (
+          <Suspense key={doctor.doctor.id} fallback={<DoctorCardSkeleton />}>
+            <DoctorCard
+              doctorImages={images.map((img) => img.url)}
+              doctorName={doctor.doctor.name || ''}
+              doctorSpecializations={doctor.specializations || []}
+              doctorSlug={doctor.doctor.id || ''}
+            />
+          </Suspense>
+        )
+      })}
     </div>
   )
 }

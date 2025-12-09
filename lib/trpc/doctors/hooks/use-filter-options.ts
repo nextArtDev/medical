@@ -1,14 +1,14 @@
 import { useTRPC } from '@/trpc/client'
 import { useQuery } from '@tanstack/react-query'
-import { useDoctorsParams } from './use-doctors-params'
+import { useDoctorsInfiniteParams } from './use-doctors-params'
 
 /**
  * Hook to fetch available filter options with counts
  * Automatically updates when other filters change
  */
-export const useFilterOptions = () => {
+export const useDoctorFilterOptions = () => {
   const trpc = useTRPC()
-  const [params] = useDoctorsParams()
+  const [params] = useDoctorsInfiniteParams()
 
   return useQuery(
     trpc.doctorsRouter.getFilterOptions.queryOptions({
