@@ -1,7 +1,7 @@
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { useTRPC } from '@/trpc/client'
-import { useMutation } from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 
 interface HookProps {
   userId?: string
@@ -21,12 +21,22 @@ export const useAppointmentReservation = ({
 }: HookProps) => {
   const router = useRouter()
   const trpc = useTRPC()
+  const queryClient = useQueryClient()
 
   const mutation = useMutation(
     trpc.doctors.reserveAppointment.mutationOptions({
-      onSuccess: (data: any) => {
+      onSuccess: (data: any, variables) => {
         if (data.success && data.data) {
           toast.success(data.message || 'Slot reserved successfully!')
+
+          // Invalidate the available slots query to refresh the UI
+          queryClient.invalidateQueries(
+            trpc.doctors.getAvailableSlots.queryOptions({
+              doctorId: variables.doctorId,
+              date: variables.date,
+              userId: userId,
+            })
+          )
 
           // Construct the redirection URL
           const params = new URLSearchParams({
