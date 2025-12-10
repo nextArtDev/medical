@@ -3,6 +3,14 @@ import { Prisma } from '@/lib/generated/prisma'
 import prisma from '@/lib/prisma'
 import { createTRPCRouter, baseProcedure } from '@/trpc/init'
 
+import {
+  createGuestAppointment,
+  createOrUpdateAppointmentReservation,
+} from '@/lib/actions'
+import {
+  getAvailableDoctorSlots,
+  getPendingAppointmentForDoctor,
+} from '@/lib/queries/server-home'
 import z from 'zod'
 
 export const doctorsRouter = createTRPCRouter({
@@ -191,6 +199,64 @@ export const doctorsRouter = createTRPCRouter({
 
             return b.count - a.count
           }),
+      }
+    }),
+
+  getAvailableSlots: baseProcedure
+    .input(
+      z.object({
+        doctorId: z.string(),
+        date: z.string(),
+        userId: z.string().optional(),
+      })
+    )
+    .query(async ({ input }) => {
+      // Reuse existing server-side logic
+      return await getAvailableDoctorSlots({
+        doctorId: input.doctorId,
+        date: input.date,
+        currentUserId: input.userId,
+      })
+    }),
+
+  getPendingAppointment: baseProcedure
+    .input(
+      z.object({
+        doctorId: z.string(),
+        userId: z.string(),
+      })
+    )
+    .query(async ({ input }) => {
+      // Reuse existing server-side logic
+      return await getPendingAppointmentForDoctor({
+        doctorId: input.doctorId,
+        userId: input.userId,
+      })
+    }),
+
+  reserveAppointment: baseProcedure
+    .input(
+      z.object({
+        doctorId: z.string(),
+        date: z.string(),
+        startTime: z.string(),
+        endTime: z.string(),
+        userId: z.string().optional(),
+      })
+    )
+    .mutation(async ({ input }) => {
+      if (input.userId) {
+        return await createOrUpdateAppointmentReservation({
+          ...input,
+          userId: input.userId,
+        })
+      } else {
+        return await createGuestAppointment({
+          doctorId: input.doctorId,
+          date: input.date,
+          startTime: input.startTime,
+          endTime: input.endTime,
+        })
       }
     }),
 })

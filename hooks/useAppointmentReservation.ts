@@ -1,17 +1,6 @@
-import { useTransition } from 'react'
-
 import { useRouter } from 'next/navigation'
-
 import { toast } from 'sonner'
-import {
-  createGuestAppointment,
-  createOrUpdateAppointmentReservation,
-  ServerActionResponse,
-} from '@/lib/actions'
-import {
-  GuestAppointmentSuccessData,
-  ReservationSuccessData,
-} from '@/types/home'
+import { useTRPC } from '@/trpc/client'
 
 interface HookProps {
   userId?: string
@@ -30,61 +19,50 @@ export const useAppointmentReservation = ({
   onConflict,
 }: HookProps) => {
   const router = useRouter()
-  const [isPending, startTransition] = useTransition()
+  const trpc = useTRPC()
+
+  const mutation = trpc.doctorsRouter.reserveAppointment.useMutation({
+    onSuccess: (data: any) => {
+      if (data.success && data.data) {
+        toast.success(data.message || 'Slot reserved successfully!')
+
+        // Construct the redirection URL
+        const params = new URLSearchParams({
+          appointmentId: data.data.appointmentId,
+        })
+
+        // For guest users, append the guestIdentifier to the URL
+        if ('guestIdentifier' in data.data) {
+          // @ts-ignore - Validated by runtime check but TS might not infer from union
+          params.append('guestIdentifier', data.data.guestIdentifier)
+        }
+
+        // Navigate to the patient details page
+        router.push(`/appointments/patient-details?${params.toString()}`)
+      } else {
+        // Handle failure
+        toast.error(data.error || 'An unknown error occurred.')
+
+        // If the error is a slot conflict, invoke the callback
+        if (data.errorType === 'SLOT_UNAVAILABLE') {
+          onConflict()
+        }
+      }
+    },
+    onError: (error) => {
+      toast.error('An unexpected error occured. Please try again later')
+    },
+  })
 
   const mutate = (payload: ReservationPayload) => {
-    startTransition(async () => {
-      toast.dismiss()
-      try {
-        let response: ServerActionResponse<
-          GuestAppointmentSuccessData | ReservationSuccessData
-        >
-
-        // Decide which server action to call based on user authentication status
-        if (userId) {
-          // Authenticated user flow
-          response = await createOrUpdateAppointmentReservation({
-            ...payload,
-            userId,
-          })
-        } else {
-          // Guest user flow
-          response = await createGuestAppointment(payload)
-        }
-
-        // Handle the server action response
-        if (response.success && response.data) {
-          toast.success(response.message || 'Slot reserved successfully!')
-
-          // Construct the redirection URL
-          const params = new URLSearchParams({
-            appointmentId: response.data.appointmentId,
-          })
-
-          // For guest users, append the guestIdentifier to the URL
-          if (!userId && 'guestIdentifier' in response.data) {
-            params.append('guestIdentifier', response.data.guestIdentifier)
-          }
-
-          // Navigate to the patient details page
-          router.push(`/appointments/patient-details?${params.toString()}`)
-        } else {
-          // Handle failure
-          toast.error(response.error || 'An unknown error occurred.')
-
-          // If the error is a slot conflict, invoke the callback
-          if (response.errorType === 'SLOT_UNAVAILABLE') {
-            onConflict()
-          }
-        }
-      } catch (error) {
-        toast.error('An unexpected error occured. Please try again later')
-      }
+    mutation.mutate({
+      ...payload,
+      userId, // Optional, handled by tRPC input schema
     })
   }
 
   return {
     mutate,
-    isPending,
+    isPending: mutation.isPending,
   }
 }
