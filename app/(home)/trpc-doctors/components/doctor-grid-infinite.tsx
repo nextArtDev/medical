@@ -19,7 +19,7 @@ export const DoctorGridInfinite = () => {
     isLoading,
     isError,
   } = useInfiniteQuery(
-    trpc.doctorsRouter.getInfiniteMany.infiniteQueryOptions(
+    trpc.doctors.getInfiniteMany.infiniteQueryOptions(
       {
         limit: params.limit,
         search: params.search || undefined,

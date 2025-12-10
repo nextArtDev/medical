@@ -157,7 +157,34 @@ export async function getAvailableDoctorSlots({
         errorType: 'ConfigurationError',
       }
     }
-    const { slotsPerHour, startTime, endTime } = appSettings
+
+    // Default to app settings
+    let { slotsPerHour, startTime, endTime } = appSettings
+
+    // Check for Doctor Specific Schedule
+    const dayOfWeek = new Date(date).getDay() // 0 = Sunday, 1 = Monday, etc.
+    const doctorSchedule = await prisma.doctorWeeklySchedule.findUnique({
+      where: {
+        doctorId_dayOfWeek: {
+          doctorId,
+          dayOfWeek,
+        },
+      },
+    })
+
+    // Override if doctor has specific schedule for this day
+    if (doctorSchedule) {
+      if (!doctorSchedule.isActive) {
+        return {
+          success: true,
+          data: [],
+          message: 'Doctor is not working on this day.',
+        }
+      }
+      if (doctorSchedule.startTime) startTime = doctorSchedule.startTime
+      if (doctorSchedule.endTime) endTime = doctorSchedule.endTime
+    }
+
     const slotDurationInMinutes = 60 / slotsPerHour
 
     // --- 2. GENERATE ALL POTENTIAL SLOTS (MASTER LIST) ---

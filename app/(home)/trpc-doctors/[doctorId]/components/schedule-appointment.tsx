@@ -1,7 +1,7 @@
 'use client'
 import { Calendar } from '@/components/ui/calendar'
 import { Button } from '@/components/ui/button'
-import { useAppointmentSlots } from '@/hooks/useAppointmentSlots'
+import { useAppointmentSlots } from '@/lib/trpc/doctors/hooks/use-appointment-slots'
 import { useState, useEffect } from 'react'
 import {
   startOfMonth,
@@ -13,7 +13,7 @@ import {
 import { cn } from '@/lib/utils'
 import { TimeSlot } from '@/types/home'
 import { Skeleton } from '@/components/ui/skeleton'
-import { useAppointmentReservation } from '@/hooks/useAppointmentReservation'
+import { useAppointmentReservation } from '@/lib/trpc/doctors/hooks/use-appointment-reservation'
 
 interface AppointmentSchedulerProps {
   doctorId: string

@@ -18,7 +18,7 @@ type Props = {
 const Page = async ({ searchParams }: Props) => {
   const queryClient = getQueryClient()
   const doctors = await queryClient.fetchQuery(
-    trpc.doctorsRouter.getFilterOptions.queryOptions({})
+    trpc.doctors.getFilterOptions.queryOptions({})
   )
   const params = await doctorsParamsLoader(searchParams)
   prefetchDoctors({ ...params })

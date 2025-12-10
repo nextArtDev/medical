@@ -11,7 +11,7 @@ export const useDoctorFilterOptions = () => {
   const [params] = useDoctorsInfiniteParams()
 
   return useQuery(
-    trpc.doctorsRouter.getFilterOptions.queryOptions({
+    trpc.doctors.getFilterOptions.queryOptions({
       search: params.search || undefined,
       specialty: params.specialty || undefined,
     })

@@ -15,7 +15,7 @@ export const useAppointmentSlots = (doctorId: string, userId?: string) => {
   const { data: pendingAppointmentData, isLoading: isPendingLoading } =
     useQuery(
       trpc.doctors.getPendingAppointment.queryOptions(
-        { doctorId, userId: userId! },
+        { doctorId, userId: userId ?? '' },
         {
           enabled: !!userId && !!doctorId,
           staleTime: 1000 * 60 * 5,
@@ -63,6 +63,7 @@ export const useAppointmentSlots = (doctorId: string, userId?: string) => {
   useEffect(() => {
     if (pendingAppointmentData) {
       const { date: pendingDate, startTime } = pendingAppointmentData
+      // Ensure we parse the date string correctly to a Date object
       setDate(new Date(pendingDate))
       setInitialTimeSlot(startTime)
     }

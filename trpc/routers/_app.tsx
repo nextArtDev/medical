@@ -1,8 +1,9 @@
 import { z } from 'zod'
 import { baseProcedure, createTRPCRouter } from '../init'
 import { doctorsRouter } from '@/lib/trpc/doctors/server/routers'
+
 export const appRouter = createTRPCRouter({
-  doctorsRouter: doctorsRouter,
+  doctors: doctorsRouter,
   hello: baseProcedure
     .input(
       z.object({
@@ -15,5 +16,6 @@ export const appRouter = createTRPCRouter({
       }
     }),
 })
+
 // export type definition of API
 export type AppRouter = typeof appRouter

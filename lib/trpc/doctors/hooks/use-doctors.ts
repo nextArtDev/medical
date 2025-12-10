@@ -7,7 +7,5 @@ export const useSuspenseProducts = () => {
   const trpc = useTRPC()
   const [params] = useDoctorsParams()
 
-  return useSuspenseQuery(
-    trpc.doctorsRouter.getInfiniteMany.queryOptions(params)
-  )
+  return useSuspenseQuery(trpc.doctors.getInfiniteMany.queryOptions(params))
 }
