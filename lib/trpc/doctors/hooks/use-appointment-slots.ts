@@ -3,7 +3,7 @@ import { format } from 'date-fns-tz'
 import { toast } from 'sonner'
 import { TimeSlot } from '@/types/home'
 import { useTRPC } from '@/trpc/client'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useSuspenseQuery } from '@tanstack/react-query'
 
 export const useAppointmentSlots = (doctorId: string, userId?: string) => {
   const trpc = useTRPC()
@@ -27,11 +27,9 @@ export const useAppointmentSlots = (doctorId: string, userId?: string) => {
   // --- Query 2: Fetch Available Slots for the Selected Date ---
   const {
     data: timeSlotsResponse,
-    isLoading: isSlotsLoading,
-    isError: isSlotsError,
-    error: slotsError,
     refetch: fetchSlotsForDate,
-  } = useQuery(
+    // useSuspenseQuery does not provide isLoading, isError (handled by Suspense/ErrorBoundary)
+  } = useSuspenseQuery(
     trpc.doctors.getAvailableSlots.queryOptions(
       {
         doctorId,
@@ -39,7 +37,6 @@ export const useAppointmentSlots = (doctorId: string, userId?: string) => {
         userId,
       },
       {
-        enabled: !!date && !!doctorId,
         staleTime: 1000 * 60 * 2,
       }
     )
@@ -47,7 +44,11 @@ export const useAppointmentSlots = (doctorId: string, userId?: string) => {
 
   const timeSlots: TimeSlot[] =
     timeSlotsResponse?.success && timeSlotsResponse.data
-      ? timeSlotsResponse.data
+      ? timeSlotsResponse.data.map((slot: any) => ({
+          ...slot,
+          startTimeUTC: new Date(slot.startTimeUTC),
+          endTimeUTC: new Date(slot.endTimeUTC),
+        }))
       : []
 
   // Handle errors via toast (optional, might be better to handle in UI)
@@ -69,16 +70,16 @@ export const useAppointmentSlots = (doctorId: string, userId?: string) => {
     }
   }, [pendingAppointmentData])
 
-  const isLoading = isPendingLoading || isSlotsLoading
+  // isLoading is now only relevant for pending appointment if we want to show loading for that?
+  // But for the slots, Suspense handles it.
+  // We can return isPendingLoading if needed, but the UI might not use it if we use Suspense for slots.
 
   return {
     date,
     setDate,
     timeSlots,
     initialTimeSlot,
-    isLoading,
-    isError: isSlotsError,
-    error: slotsError,
+    isPendingLoading, // renamed from isLoading
     fetchSlotsForDate,
   }
 }

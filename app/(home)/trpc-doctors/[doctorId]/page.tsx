@@ -1,13 +1,17 @@
 import DoctorProfileTopCard from './components/doctorprofile-topcard'
 import { notFound } from 'next/navigation'
-// import AppointmentScheduler from './components/schedule-appointment'
 import DoctorProfileAbout from './components/about'
 import PatientReviews from './components/patient-reviews'
-import { getDoctorProfile } from '@/lib/queries/home'
 
 import AppointmentScheduler from './components/schedule-appointment'
 import { currentUser } from '@/lib/auth-helpers'
 import { cleanupExpiredReservations } from '../../doctors/[doctorId]/lib/actions'
+import { trpc, HydrateClient } from '@/trpc/server'
+import { Suspense } from 'react'
+import { Skeleton } from '@/components/ui/skeleton'
+import { appRouter } from '@/trpc/routers/_app'
+import { createCallerFactory, createTRPCContext } from '@/trpc/init'
+
 interface Params {
   doctorId: string
 }
@@ -20,42 +24,25 @@ export default async function DoctorProfilePage({
   const doctorIdObject = await params
   const { doctorId } = doctorIdObject
 
+  // Prefetch doctor profile to dehydrate state for client
+  void trpc.doctors.getById.prefetch({ id: doctorId })
+
   await cleanupExpiredReservations()
 
-  let doctorActionResponse
+  // Create caller for direct server-side access
+  // We use createCallerFactory with appRouter, effectively simulating a server-side call
+  const createCaller = createCallerFactory(appRouter)
+  const ctx = await createTRPCContext()
+  const caller = createCaller(ctx)
+
+  let doctor
   try {
-    doctorActionResponse = await getDoctorProfile(doctorId)
+    // Fetch directly to pass data to RSC components and check 404
+    doctor = await caller.doctors.getById({ id: doctorId })
   } catch (error) {
     console.error('Error fetching doctor details:', error)
-    return (
-      <div className="p-6 text-center text-red-500">
-        <p>
-          We&apos;re sorry , but something went wrong while trying to load the
-          doctor&apos;s profile.
-        </p>
-        <p>Please try refreshing the page or check back later</p>
-      </div>
-    )
   }
 
-  if (!doctorActionResponse.success) {
-    if (doctorActionResponse.errorType === 'NOT_FOUND') {
-      notFound()
-    }
-    //handle all other defined errors
-    console.error(
-      `failed to fetch doctor details for ${doctorId} `,
-      doctorActionResponse.message,
-      doctorActionResponse.error
-    )
-    ;<div className="p-6 text-center text-red-500">
-      <p>Could not load doctor profile.</p>
-      <p>Please try again later</p>
-    </div>
-  }
-
-  //happy path
-  const doctor = doctorActionResponse.data
   if (!doctor) {
     notFound()
   }
@@ -65,42 +52,51 @@ export default async function DoctorProfilePage({
   const userRole = user?.role ? user.role : undefined
 
   return (
-    <div className="w-full flex flex-col md:flex-row max-w-[1376px] mx-auto gap-8 p-6 md:p-8">
-      <div className="flex flex-col gap-6 md:gap-8 md:max-w-[908px] md:flex-1">
-        <DoctorProfileTopCard
-          //   id={doctor.id}
-          name={doctor.name}
-          credentials={doctor.doctorProfile.credentials}
-          specialty={doctor.doctorProfile.specialty}
-          specializations={doctor.doctorProfile.specializations}
-          rating={doctor.doctorProfile.rating}
-          reviewCount={doctor.doctorProfile.reviewCount}
-          images={doctor.doctorProfile.images || [{ url: '/images/9.jpg' }]}
-          brief={doctor.doctorProfile.brief}
-        />
-        <div className="md:hidden">
-          <AppointmentScheduler
+    <HydrateClient>
+      <div className="w-full flex flex-col md:flex-row max-w-[1376px] mx-auto gap-8 p-6 md:p-8">
+        <div className="flex flex-col gap-6 md:gap-8 md:max-w-[908px] md:flex-1">
+          <DoctorProfileTopCard
+            name={doctor.name}
+            credentials={doctor.doctorProfile.credentials}
+            specialty={doctor.doctorProfile.specialty}
+            specializations={doctor.doctorProfile.specializations}
+            rating={doctor.doctorProfile.rating}
+            reviewCount={doctor.doctorProfile.reviewCount}
+            images={doctor.doctorProfile.images || [{ url: '/images/9.jpg' }]}
+            brief={doctor.doctorProfile.brief}
+          />
+          <div className="md:hidden">
+            <Suspense
+              fallback={<Skeleton className="h-[400px] w-full rounded-lg" />}
+            >
+              <AppointmentScheduler
+                doctorId={doctor.id}
+                userId={userId}
+                userRole={userRole}
+              />
+            </Suspense>
+          </div>
+          <DoctorProfileAbout
+            name={doctor.name}
+            brief={doctor.doctorProfile.brief}
+          />
+          <PatientReviews
             doctorId={doctor.id}
-            userId={userId}
-            userRole={userRole}
+            averageRating={doctor.doctorProfile.rating}
           />
         </div>
-        <DoctorProfileAbout
-          name={doctor.name}
-          brief={doctor.doctorProfile.brief}
-        />
-        <PatientReviews
-          doctorId={doctor.id}
-          averageRating={doctor.doctorProfile.rating}
-        />
+        <div className="hidden md:block ">
+          <Suspense
+            fallback={<Skeleton className="h-[400px] w-full rounded-lg" />}
+          >
+            <AppointmentScheduler
+              doctorId={doctor.id}
+              userId={userId}
+              userRole={userRole}
+            />
+          </Suspense>
+        </div>
       </div>
-      <div className="hidden md:block ">
-        <AppointmentScheduler
-          doctorId={doctor.id}
-          userId={userId}
-          userRole={userRole}
-        />
-      </div>
-    </div>
+    </HydrateClient>
   )
 }

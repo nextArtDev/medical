@@ -29,14 +29,15 @@ export const useAppointmentReservation = ({
         if (data.success && data.data) {
           toast.success(data.message || 'Slot reserved successfully!')
 
-          // Invalidate the available slots query to refresh the UI
-          queryClient.invalidateQueries(
-            trpc.doctors.getAvailableSlots.queryOptions({
-              doctorId: variables.doctorId,
-              date: variables.date,
-              userId: userId,
-            })
-          )
+          // Invalidate all getAvailableSlots queries to refresh the UI
+          queryClient.invalidateQueries({
+            queryKey: ['doctors', 'getAvailableSlots'],
+          })
+
+          // Also invalidate pending appointment query
+          queryClient.invalidateQueries({
+            queryKey: ['doctors', 'getPendingAppointment'],
+          })
 
           // Construct the redirection URL
           const params = new URLSearchParams({

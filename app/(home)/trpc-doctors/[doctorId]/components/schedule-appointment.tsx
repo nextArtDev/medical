@@ -31,7 +31,7 @@ export default function AppointmentScheduler({
     setDate,
     timeSlots,
     initialTimeSlot,
-    isLoading,
+    isPendingLoading,
     fetchSlotsForDate,
   } = useAppointmentSlots(doctorId, userId)
 
@@ -86,7 +86,7 @@ export default function AppointmentScheduler({
     if (date) {
       setDate(date)
       setSelectedSlot(null)
-      fetchSlotsForDate()
+      // fetchSlotsForDate() // handled by Suspense/useSuspenseQuery dependency on date state
       // Update the current month when a date is selected
       setCurrentMonth(date)
     }
@@ -106,7 +106,7 @@ export default function AppointmentScheduler({
       // Don't automatically select a date when changing months
       // Let the user explicitly select a date
     }
-    fetchSlotsForDate()
+    // fetchSlotsForDate()
   }
 
   const today = new Date()
@@ -143,24 +143,7 @@ export default function AppointmentScheduler({
         <div className="body-semibold text-text-title mb-3">
           Available Time Slots
         </div>
-        {isLoading ? (
-          <div className="flex justify-center py-8">
-            {/* <Loader2 className="animate-spin h-8 w-8 text-primary" /> */}
-            <div className="grid grid-cols-2 gap-3">
-              {Array.from({ length: 16 }).map((_, index) => (
-                <div
-                  key={index}
-                  className={cn(
-                    'w-full  rounded-md',
-                    'flex items-center justify-center'
-                  )}
-                >
-                  <Skeleton className="w-24 h-8 bg-gray-300 dark:bg-gray-700 rounded-md" />
-                </div>
-              ))}
-            </div>
-          </div>
-        ) : outOfRangeMessage ? (
+        {outOfRangeMessage ? (
           <div className="text-center text-grey-500 rounded-md p-4 bg-gray-50">
             {outOfRangeMessage}
           </div>
@@ -199,9 +182,7 @@ export default function AppointmentScheduler({
       <div className="mt-6">
         <Button
           onClick={handleReservation}
-          disabled={
-            !selectedSlot || isLoading || isPending || userRole === 'admin'
-          }
+          disabled={!selectedSlot || isPending || userRole === 'admin'}
           className="w-full py-6 body-semibold text-text-caption-2 mb-20"
         >
           {getButtonText()}

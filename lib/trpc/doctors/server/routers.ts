@@ -259,4 +259,15 @@ export const doctorsRouter = createTRPCRouter({
         })
       }
     }),
+
+  getById: baseProcedure
+    .input(z.object({ id: z.string() }))
+    .query(async ({ input }) => {
+      const { getDoctorProfile } = await import('@/lib/queries/home')
+      const result = await getDoctorProfile(input.id)
+      if (!result.success || !result.data) {
+        throw new Error(result.error || 'Doctor not found')
+      }
+      return result.data
+    }),
 })
