@@ -2,18 +2,13 @@
 import { Calendar } from '@/components/ui/calendar'
 import { Button } from '@/components/ui/button'
 import { useAppointmentSlots } from '@/lib/trpc/doctors/hooks/use-appointment-slots'
-import { useState, useEffect } from 'react'
-import {
-  startOfMonth,
-  addMonths,
-  startOfDay,
-  isAfter,
-  format,
-} from 'date-fns-jalali'
-import { cn } from '@/lib/utils'
+import { useState, useEffect, Suspense } from 'react'
+import { startOfMonth, addMonths, isAfter, format } from 'date-fns-jalali'
 import { TimeSlot } from '@/types/home'
-import { Skeleton } from '@/components/ui/skeleton'
 import { useAppointmentReservation } from '@/lib/trpc/doctors/hooks/use-appointment-reservation'
+import TimeSlotsList from './time-slots-list'
+import { useQueryClient } from '@tanstack/react-query'
+import { useTRPC } from '@/trpc/client'
 
 interface AppointmentSchedulerProps {
   doctorId: string
@@ -29,40 +24,40 @@ export default function AppointmentScheduler({
   const {
     date: selectedDate,
     setDate,
-    timeSlots,
     initialTimeSlot,
     isPendingLoading,
-    fetchSlotsForDate,
   } = useAppointmentSlots(doctorId, userId)
+
+  const queryClient = useQueryClient()
+  const trpc = useTRPC()
+
+  const [selectedSlot, setSelectedSlot] = useState<TimeSlot | null>(null)
 
   const { mutate: reserveAppointment, isPending } = useAppointmentReservation({
     userId,
     onConflict: () => {
       setSelectedSlot(null)
-      if (selectedDate) fetchSlotsForDate()
+      // Invalidate query to refresh slots
+      if (selectedDate) {
+        queryClient.invalidateQueries(
+          trpc.doctors.getAvailableSlots.queryOptions({
+            doctorId,
+            date: format(selectedDate, 'yyyy-MM-dd'),
+            userId,
+          }).queryKey
+        )
+      }
     },
   })
 
-  const [selectedSlot, setSelectedSlot] = useState<TimeSlot | null>(null)
   const [currentMonth, setCurrentMonth] = useState<Date>(new Date())
   const [outOfRangeMessage, setOutOfRangeMessage] = useState<string | null>(
     null
   )
 
-  // Sync selected slot with initial pending appointment
-  useEffect(() => {
-    if (initialTimeSlot && timeSlots.length > 0) {
-      const slotToSelect = timeSlots.find(
-        (slot) => slot.startTime === initialTimeSlot
-      )
-      setSelectedSlot(slotToSelect || null)
-    }
-  }, [initialTimeSlot, timeSlots])
-
   // Sync calendar month with selected date, but only when a date is explicitly selected
   useEffect(() => {
     if (selectedDate && !currentMonth) {
-      // Only set currentMonth if it's not already set
       setCurrentMonth(selectedDate)
     }
   }, [selectedDate])
@@ -72,11 +67,10 @@ export default function AppointmentScheduler({
       console.error('A date and time slot must be selected.')
       return
     }
-    // Add your reservation logic here
 
     reserveAppointment({
       doctorId,
-      date: format(selectedDate, 'yyyy-MM-dd'), // Format date to YYYY-MM-DD
+      date: format(selectedDate, 'yyyy-MM-dd'),
       startTime: selectedSlot.startTime,
       endTime: selectedSlot.endTime,
     })
@@ -86,8 +80,6 @@ export default function AppointmentScheduler({
     if (date) {
       setDate(date)
       setSelectedSlot(null)
-      // fetchSlotsForDate() // handled by Suspense/useSuspenseQuery dependency on date state
-      // Update the current month when a date is selected
       setCurrentMonth(date)
     }
   }
@@ -103,10 +95,7 @@ export default function AppointmentScheduler({
     } else {
       setOutOfRangeMessage(null)
       setSelectedSlot(null)
-      // Don't automatically select a date when changing months
-      // Let the user explicitly select a date
     }
-    // fetchSlotsForDate()
   }
 
   const today = new Date()
@@ -139,7 +128,7 @@ export default function AppointmentScheduler({
         />
       </div>
 
-      <div className="mt-[20px]">
+      <div className="mt-[20px] min-h-[200px]">
         <div className="body-semibold text-text-title mb-3">
           Available Time Slots
         </div>
@@ -147,35 +136,16 @@ export default function AppointmentScheduler({
           <div className="text-center text-grey-500 rounded-md p-4 bg-gray-50">
             {outOfRangeMessage}
           </div>
-        ) : timeSlots.length > 0 ? (
-          <div className="grid grid-cols-2 gap-3">
-            {timeSlots.map((slot) => (
-              <Button
-                key={slot.startTime}
-                variant={
-                  selectedSlot?.startTime === slot.startTime
-                    ? 'default'
-                    : 'outline'
-                }
-                onClick={() => setSelectedSlot(slot)}
-                className={cn(
-                  'w-full py-2 px-4 border border-border-2 body-small-bold',
-                  {
-                    'text-text-caption-2':
-                      selectedSlot?.startTime === slot.startTime,
-                    'text-text-body':
-                      selectedSlot?.startTime !== slot.startTime,
-                  }
-                )}
-              >
-                {slot.startTime}
-              </Button>
-            ))}
-          </div>
         ) : (
-          <div className="text-center text-gray-500 bg-gray-50 p-4 rounded-md">
-            No available slots for this day.
-          </div>
+          <Suspense fallback={<SlotsSkeleton />}>
+            <TimeSlotsList
+              doctorId={doctorId}
+              userId={userId}
+              date={selectedDate}
+              selectedSlot={selectedSlot}
+              onSelectSlot={setSelectedSlot}
+            />
+          </Suspense>
         )}
       </div>
 
@@ -188,6 +158,19 @@ export default function AppointmentScheduler({
           {getButtonText()}
         </Button>
       </div>
+    </div>
+  )
+}
+
+function SlotsSkeleton() {
+  return (
+    <div className="grid grid-cols-2 gap-3">
+      {Array.from({ length: 8 }).map((_, index) => (
+        <div
+          key={index}
+          className="w-full h-10 bg-gray-100 rounded-md animate-pulse"
+        />
+      ))}
     </div>
   )
 }

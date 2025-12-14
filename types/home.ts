@@ -58,6 +58,7 @@ export interface TimeSlot {
   endTime: string
   startTimeUTC: Date
   endTimeUTC: Date
+  isAvailable: boolean
 }
 
 // Appointment related types

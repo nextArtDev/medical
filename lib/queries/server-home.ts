@@ -219,6 +219,7 @@ export async function getAvailableDoctorSlots({
           'HH:mm'
         ),
         endTime: format(toZonedTime(currentSlotEndUTC, appTimeZone), 'HH:mm'),
+        isAvailable: true,
       })
 
       currentSlotStartUTC = currentSlotEndUTC
@@ -308,10 +309,12 @@ export async function getAvailableDoctorSlots({
     })
 
     if (takenSlotTimesUTC.size > 0) {
-      availableSlots = availableSlots.filter(
-        // If takenSlotTimesUTC has the slot's startTimeUTC, it means it's booked. and we shouldn't taken it, and only what is not in the takenSlotUTC will be in availableSlots
-        (slot) => !takenSlotTimesUTC.has(slot.startTimeUTC.toISOString())
-      )
+      availableSlots = availableSlots.map((slot) => {
+        if (takenSlotTimesUTC.has(slot.startTimeUTC.toISOString())) {
+          return { ...slot, isAvailable: false }
+        }
+        return slot
+      })
     }
 
     // C. Filter Past Slots for Today
