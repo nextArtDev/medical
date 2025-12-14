@@ -6,7 +6,7 @@ import PatientReviews from './components/patient-reviews'
 import AppointmentScheduler from './components/schedule-appointment'
 import { currentUser } from '@/lib/auth-helpers'
 import { cleanupExpiredReservations } from '../../doctors/[doctorId]/lib/actions'
-import { trpc, HydrateClient } from '@/trpc/server'
+import { trpc, HydrateClient, prefetch } from '@/trpc/server'
 import { Suspense } from 'react'
 import { Skeleton } from '@/components/ui/skeleton'
 import { appRouter } from '@/trpc/routers/_app'
@@ -25,7 +25,7 @@ export default async function DoctorProfilePage({
   const { doctorId } = doctorIdObject
 
   // Prefetch doctor profile to dehydrate state for client
-  void trpc.doctors.getById.prefetch({ id: doctorId })
+  void prefetch(trpc.doctors.getById.queryOptions({ id: doctorId }))
 
   await cleanupExpiredReservations()
 

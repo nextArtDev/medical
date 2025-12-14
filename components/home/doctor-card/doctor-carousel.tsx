@@ -70,7 +70,7 @@ export default function DoctorCarousel({ items }: DoctorCarousel) {
               vars={{ delay: 0.2 * i, duration: 0.3, ease: 'sine.inOut' }}
             >
               <TransitionLink
-                href={`/doctors/${item.slug}`}
+                href={`/trpc-doctors/${item.slug}`}
                 className="flex flex-col border-none  bg-transparent gap-4 rounded-t-xl rounded-b-4xl overflow-hidden" /* Switched to flex-col for consistent height; moved gap here */
               >
                 {!!item?.images && (
