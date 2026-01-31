@@ -287,8 +287,8 @@ export async function getAvailableDoctorSlots({
       },
     })
 
-    // Create a set of UTC start times for all "taken" slots for efficient lookup.
-    const takenSlotTimesUTC = new Set<string>()
+    // Create a set of formatted start times (HH:mm) for all "taken" slots.
+    const takenSlotTimes = new Set<string>()
     appointmentsOnDate.forEach((appt) => {
       const isConfirmed =
         appt.status === AppointmentStatus.BOOKING_CONFIRMED ||
@@ -304,13 +304,19 @@ export async function getAvailableDoctorSlots({
         isPendingAndActive && currentUserId && appt.userId === currentUserId
 
       if ((isConfirmed || isPendingAndActive) && !isCurrentUserOwnPendingSlot) {
-        takenSlotTimesUTC.add(appt.appointmentStartUTC.toISOString())
+        // Convert UTC to App Timezone and format to HH:mm to match slot.startTime
+        const zonedApptStart = toZonedTime(
+          appt.appointmentStartUTC,
+          appTimeZone
+        )
+        const formattedStart = format(zonedApptStart, 'HH:mm')
+        takenSlotTimes.add(formattedStart)
       }
     })
 
-    if (takenSlotTimesUTC.size > 0) {
+    if (takenSlotTimes.size > 0) {
       availableSlots = availableSlots.map((slot) => {
-        if (takenSlotTimesUTC.has(slot.startTimeUTC.toISOString())) {
+        if (takenSlotTimes.has(slot.startTime)) {
           return { ...slot, isAvailable: false }
         }
         return slot

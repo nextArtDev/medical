@@ -115,7 +115,7 @@ async function createPaymentRequest(
   // Use the new API route for callback
   const callbackURL =
     process.env.NODE_ENV === 'production'
-      ? `${process.env.NEXT_PUBLIC_APP_URL}/api/payment/callback?appointmentId=${appointmentId}&orderId={orderId}`
+      ? `${process.env.NEXT_PUBLIC_APP_URL}/api/payment/callback?appointmentId=${appointmentId}&orderId=${orderId}`
       : `http://localhost:3000/api/payment/callback?appointmentId=${appointmentId}&orderId=${orderId}`
 
   const payment = (await zarinpal.PaymentRequest({
@@ -692,7 +692,7 @@ export async function updateOrderToPaidSecure({
         },
       })
     }
-    const updatedAppointment = await prisma.appointment.update({
+    const updatedAppointment = await tx.appointment.update({
       where: {
         appointmentId: appointmentId,
       },

@@ -39,13 +39,13 @@ export default function AppointmentScheduler({
       setSelectedSlot(null)
       // Invalidate query to refresh slots
       if (selectedDate) {
-        queryClient.invalidateQueries(
-          trpc.doctors.getAvailableSlots.queryOptions({
+        queryClient.invalidateQueries({
+          queryKey: trpc.doctors.getAvailableSlots.queryOptions({
             doctorId,
             date: format(selectedDate, 'yyyy-MM-dd'),
             userId,
-          }).queryKey
-        )
+          }).queryKey,
+        })
       }
     },
   })
