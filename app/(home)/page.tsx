@@ -2,11 +2,14 @@ import DoctorCarousel from '@/components/home/doctor-card/doctor-carousel'
 import ToothGlassPage from '@/components/home/hero/AppleTypeHero'
 import { ThemeSwitcher } from '@/components/shared/theme-switcher'
 import { Button } from '@/components/ui/button'
+import prisma from '@/lib/prisma'
 import { getAllDoctors } from '@/lib/queries/home'
+import { main } from '@/prisma/seed'
 import { url } from 'inspector'
 
 export default async function Home() {
   const doctors = await getAllDoctors()
+
   console.log(doctors)
   return (
     <section className="relative min-h-screen w-screen flex  flex-col gap-10 items-center justify-center h-full ">

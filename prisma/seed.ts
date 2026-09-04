@@ -16,7 +16,7 @@ const NUM_APPOINTMENTS = 50
 const NUM_DEPARTMENTS = 6
 const NUM_FAQS = 5
 
-async function main() {
+export async function main() {
   console.log('Start seeding...')
 
   // --- Cleanup: Delete existing data to start fresh ---
@@ -82,8 +82,8 @@ async function main() {
             'bone',
           ]),
         },
-      })
-    )
+      }),
+    ),
   )
   console.log(`Seeded ${departments.length} departments.`)
 
@@ -96,8 +96,8 @@ async function main() {
           answer: faker.lorem.sentences(2),
           order: i + 1,
         },
-      })
-    )
+      }),
+    ),
   )
   console.log(`Seeded ${faqs.length} FAQs.`)
 
@@ -112,8 +112,8 @@ async function main() {
           role: Role.doctor,
           isActive: true,
         },
-      })
-    )
+      }),
+    ),
   )
 
   const patientUsers = await Promise.all(
@@ -128,8 +128,8 @@ async function main() {
           phoneNumber: faker.phone.number(),
           isActive: true,
         },
-      })
-    )
+      }),
+    ),
   )
 
   // Create one admin user
@@ -144,7 +144,7 @@ async function main() {
     },
   })
   console.log(
-    `Seeded ${doctorUsers.length} doctors, ${patientUsers.length} patients, and 1 admin.`
+    `Seeded ${doctorUsers.length} doctors, ${patientUsers.length} patients, and 1 admin.`,
   )
 
   // --- 3. Seed Doctor Profiles ---
@@ -161,13 +161,13 @@ async function main() {
           ])}`,
           specializations: faker.helpers.arrayElements(
             ['Hypertension', 'ECG', 'Angioplasty', 'Acne', 'Eczema'],
-            { min: 1, max: 3 }
+            { min: 1, max: 3 },
           ),
           rating: faker.number.float({ min: 3.5, max: 5.0 }),
           reviewCount: faker.number.int({ min: 10, max: 200 }),
         },
-      })
-    )
+      }),
+    ),
   )
   console.log('Seeded doctor profiles.')
 
@@ -175,7 +175,7 @@ async function main() {
   await Promise.all(
     doctorUsers.slice(0, 3).map(
       (
-        doctor // Give leaves to the first 3 doctors
+        doctor, // Give leaves to the first 3 doctors
       ) =>
         prisma.doctorLeave.create({
           data: {
@@ -184,8 +184,8 @@ async function main() {
             leaveType: faker.helpers.arrayElement(Object.values(LeaveType)),
             reason: faker.lorem.sentence(),
           },
-        })
-    )
+        }),
+    ),
   )
   console.log('Seeded doctor leaves.')
 
@@ -210,13 +210,13 @@ async function main() {
           status: faker.helpers.arrayElement(Object.values(AppointmentStatus)),
         },
       })
-    })
+    }),
   )
   console.log(`Seeded ${appointments.length} appointments.`)
 
   // --- 6. Seed Testimonials for Completed Appointments ---
   const completedAppointments = appointments.filter(
-    (apt) => apt.status === AppointmentStatus.COMPLETED
+    (apt) => apt.status === AppointmentStatus.COMPLETED,
   )
   await Promise.all(
     completedAppointments.slice(0, 15).map((appointment) =>
@@ -229,8 +229,8 @@ async function main() {
           rating: faker.number.float({ min: 4.0, max: 5.0 }),
           isPending: false,
         },
-      })
-    )
+      }),
+    ),
   )
   console.log(`Seeded testimonials for completed appointments.`)
 
@@ -245,15 +245,15 @@ async function main() {
           currency: 'USD',
           notes: faker.lorem.sentence({ min: 1, max: 3 }),
           paymentStatus: faker.helpers.arrayElement(
-            Object.values(PaymentStatus)
+            Object.values(PaymentStatus),
           ),
           paidAt:
             appointment.status === AppointmentStatus.COMPLETED
               ? faker.date.past({ years: 1 })
               : null,
         },
-      })
-    )
+      }),
+    ),
   )
   console.log('Seeded orders.')
 
@@ -269,8 +269,8 @@ async function main() {
           Authority: faker.string.alphanumeric(10),
           transactionId: faker.string.alphanumeric(15),
         },
-      })
-    )
+      }),
+    ),
   )
   console.log('Seeded payment details.')
 
